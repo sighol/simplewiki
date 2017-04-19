@@ -8,25 +8,23 @@ extern crate pulldown_cmark;
 
 use std::io::prelude::*;
 use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use pulldown_cmark::{html, Parser};
 use rocket_contrib::Template;
+use rocket::response::NamedFile;
+
+mod view;
+
 
 #[derive(Serialize)]
 struct TemplateContext {
-    title: String,
+    view_groups: Vec<view::ViewGroup>,
     content: String,
+    title: String,
 }
 
-#[get("/hello/<name>/<age>")]
-fn hello(name: &str, age: u8) -> String {
 
-    let parser = Parser::new("# Hello World\n\n- Test\n-Test2");
-    let mut bfr = String::new();
-    html::push_html(&mut bfr, parser);
-
-    format!("Hello, {} year old named {}!\n{}", age, name, &bfr)
-}
 
 fn get_html(file: &str) -> String {
     let mut file = File::open(file).expect("Unable to open markdown file");
@@ -39,14 +37,20 @@ fn get_html(file: &str) -> String {
     bfr
 }
 
+#[get("/static/<file..>")]
+fn files(file: PathBuf) -> Option<NamedFile> {
+    NamedFile::open(Path::new("static/").join(file)).ok()
+}
+
 #[get("/")]
 fn get() -> Template {
     let file = r"C:\Dev\wiki\todo.md";
-    
     let content = get_html(file);
     
+    let groups = view::get_groups();
     let context = TemplateContext {
-        title: "My title".into(),
+        title: "todo".into(),
+        view_groups: groups,
         content: content,
     };
 
@@ -56,5 +60,5 @@ fn get() -> Template {
 }
 
 fn main() {
-    rocket::ignite().mount("/", routes![hello, get]).launch();
+    rocket::ignite().mount("/", routes![get, files]).launch();
 }

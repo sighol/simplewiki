@@ -8,7 +8,7 @@ pulldown-cmark = "*"
 rocket = "*"
 rocket_codegen = "*"
 rocket_contrib = { version = "*", features = ["handlebars_templates"] }
-handlebars = "0.25.*"
+handlebars = "*"
 
 serde = "0.9"
 serde_derive = "0.9"

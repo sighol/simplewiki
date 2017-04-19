@@ -1,0 +1,31 @@
+body {
+    margin-top: 65px;
+}
+
+#content {
+    font-size: 1.2em;
+}
+
+.CodeMirror, .CodeMirror-scroll {
+    max-height: 700px;
+}
+
+#toc {
+    position: absolute;
+    top: 100px
+    width: 100%;
+    margin: 0px 0px 20px 0px;
+}
+
+@media (min-width: 1400px) {
+    .container {
+        margin-left: 400px
+    }
+}
+
+
+@media (min-width: 979px) {
+  ul.nav li.dropdown:hover > ul.dropdown-menu {
+    display: block;
+  }
+}

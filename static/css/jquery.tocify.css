@@ -1,0 +1,97 @@
+/*
+ * jquery.tocify.css 1.9.0
+ * Author: @gregfranko
+ */
+
+
+
+/* The Table of Contents container element */
+.tocify {
+    width: 350px;
+    max-height: 90%;
+    overflow: auto;
+    margin-left: 2%;
+    left: 0px;
+    top: 100px;
+    position: fixed;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+}
+
+.tocify-anchor {
+    display: block;
+    position: relative;
+    top: -60px;
+    visibility: hidden;
+}
+
+ @media (max-width: 1400px) {
+    .tocify {
+        position: relative;
+        width: 100%;
+        margin: 0px 0px 20px 0px;
+    }
+}
+
+.tocify-item.active {
+    background-color: #337ab7;
+    color: white;
+}
+
+.tocify-item.active:hover {
+    background-color: #337ab7;
+}
+
+.tocify-item.active a
+{
+    color: white;
+}
+
+.tocify-item.active a:hover {
+    color: #337ab7;
+}
+
+/* The Table of Contents is composed of multiple nested unordered lists.  These styles remove the default styling of an unordered list because it is ugly. */
+.tocify ul, .tocify li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    line-height: 30px;
+}
+
+/* Top level header elements */
+.tocify-header {
+    text-indent: 10px;
+}
+
+/* Top level subheader elements.  These are the first nested items underneath a header element. */
+.tocify-subheader {
+    text-indent: 20px;
+    /*display: none;*/
+}
+
+/* Makes the font smaller for all subheader elements. */
+.tocify-subheader li {
+    font-size: 12px;
+}
+
+/* Further indents second level subheader elements. */
+.tocify-subheader .tocify-subheader {
+    text-indent: 30px;
+}
+
+/* Further indents third level subheader elements. You can continue this pattern if you have more nested elements. */
+.tocify-subheader .tocify-subheader .tocify-subheader {
+    text-indent: 40px;
+}
+
+/* Twitter Bootstrap Override Style */
+.nav-list > li > a, .nav-list .nav-header {
+    margin: 0px;
+}
+
+/* Twitter Bootstrap Override Style */
+.nav-list > li > a {
+    padding: 5px;
+}
