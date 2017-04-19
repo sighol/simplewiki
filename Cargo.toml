@@ -1,0 +1,15 @@
+[package]
+name = "simplewiki-rs"
+version = "0.1.0"
+authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
+
+[dependencies]
+pulldown-cmark = "*"
+rocket = "*"
+rocket_codegen = "*"
+rocket_contrib = { version = "*", features = ["handlebars_templates"] }
+handlebars = "0.25.*"
+
+serde = "0.9"
+serde_derive = "0.9"
+serde_json = "0.9"

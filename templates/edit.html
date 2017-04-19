@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}
+	Editing {{ page }}
+{% endblock title %}
+
+{% block page_header %}
+
+	<h1>Edit: <a href="/{{ page }}">{{page}}</a></h1>
+{% endblock %}
+
+{% block head_extra %}
+	<script src="/static/js/simplemde.min.js"></script>
+	<link rel="stylesheet" href="/static/css/simplemde.min.css">
+{% endblock %}
+
+{% block content %}
+
+	<style>
+		#edit-content {
+			height: 400px;
+			width: 700px;
+		}
+	</style>
+
+
+
+	<form action="" method="post">
+		<textarea id="edit-content" name="content">{{ content }}</textarea>
+		<p>
+			<input type="submit" class="btn btn-success" />
+		</p>
+	</form>
+
+	<script>
+		var simplemde = new SimpleMDE({
+			element: document.getElementById("edit-content"),
+			spellChecker: false,
+			indentWithTabs: false,
+			tabSize: 4,
+		});
+	</script>
+{% endblock content %}
