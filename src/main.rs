@@ -19,6 +19,9 @@ struct TemplateContext {
     view_groups: Vec<view::ViewGroup>,
     content: String,
     title: String,
+    prev_url: String,
+    next_url: String,
+    page: String,
 }
 
 fn get_html(file: &Path) -> String {
@@ -41,23 +44,25 @@ fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
-#[get("/<path..>")]
-fn get(path: PathBuf) -> Template {
+#[get("/<category>/<page>")]
+fn get(category: &str, page: &str) -> Template {
     let wiki_root = Path::new(r"C:\Dev\wiki");
     
-    let page_name = String::from(path.file_name().unwrap().to_str().unwrap());
-    let file_name = format!("{}.md", &page_name);
+    let file_name = format!("{}.md", page);
+    let page_name = format!("{}/{}", category, page);
 
-    let mut path = path;
-    path.set_file_name(&file_name);
-    let path = wiki_root.join(path);
+    let path = wiki_root.join(category).join(file_name);
 
     let content = get_html(&path);
     
     let view_finder = view::ViewFinder::new(wiki_root.to_owned());
     let groups = view_finder.get_groups().expect("Unable to read wiki directory");
+    let prev_next = view::find_prev_next(&groups, &page_name);
     let context = TemplateContext {
-        title: page_name,
+        prev_url: prev_next.prev.map_or("".into(), |p| p.file_name),
+        next_url: prev_next.next.map_or("".into(), |p| p.file_name),
+        title: page.into(),
+        page: page_name,
         view_groups: groups,
         content: content,
     };

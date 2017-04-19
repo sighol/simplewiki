@@ -51,7 +51,11 @@
 		  </ul>
 
 
-          <p>navbar_extra</p>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="/{{ prev_url }}">&larr;</a></li>
+					<li><a href="/{{ next_url }}">&rarr;</a></li>
+					<li><a href="/edit/{{page}}">Edit</a></li>
+				</ul>
 
         </div><!--/.nav-collapse -->
       </div>
@@ -62,7 +66,7 @@
 				
                 <!-- page_header -->
 								<h1>{{ title }}</h1>
-								
+
 								<p>
 									<a href="/edit/{{page}}">Edit</a> |
 									<a href="/edit_sublime/{{page}}">Edit in sublime</a>

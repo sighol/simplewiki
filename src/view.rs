@@ -8,14 +8,29 @@ use regex::Regex;
 
 #[derive(Serialize)]
 pub struct View {
-    file_name: String,
-    name: String,
+    pub file_name: String,
+    pub name: String,
+}
+
+impl fmt::Display for View {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{View file_name={}}}", &self.file_name)
+    }
+}
+
+impl Clone for View {
+    fn clone(&self) -> Self {
+        View {
+            file_name: self.file_name.clone(),
+            name: self.name.clone(),
+        }
+    }
 }
 
 #[derive(Serialize)]
 pub struct ViewGroup {
-    key: String,
-    views: Vec<View>,
+    pub key: String,
+    pub views: Vec<View>,
 }
 
 impl ViewGroup {
@@ -24,12 +39,6 @@ impl ViewGroup {
             key: key.into(),
             views: Vec::new(),
         }
-    }
-}
-
-impl fmt::Display for View {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{View file_name={}}}", &self.file_name)
     }
 }
 
@@ -100,6 +109,55 @@ impl ViewFinder {
     }
 }
 
+#[derive(Serialize)]
+pub struct PrevNextResult {
+    pub prev: Option<View>,
+    pub next: Option<View>,
+}
+
+impl PrevNextResult {
+    fn new() -> Self {
+        PrevNextResult {prev: None, next: None}
+    }
+}
+
+pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextResult {
+    let views: Vec<&View> = view_groups
+            .iter()
+            .flat_map(|group| group.views.iter())
+            .collect();
+
+    let mut result = PrevNextResult::new();
+
+    let mut prev = -1i32;
+    let mut next = -1i32;
+    let mut current = -1i32;
+
+    for index in 0..views.len() {
+        prev = current;
+        current = index as i32;
+        next = -1i32;
+
+        if index + 1 < views.len() {
+            next = (index + 1) as i32;
+        }
+
+        if views[index].file_name == view_name {
+            break;
+        }
+    }
+
+    if prev > 0i32 {
+        result.prev = Some(views[prev as usize].clone());
+    }
+
+    if next > 0i32 {
+        result.next = Some(views[next as usize].clone());
+    }
+
+    result
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -109,5 +167,37 @@ mod tests {
         let view = View { name: "Sigurd".into(), file_name: "file".into()};
         let display = format!("{}", view);
         assert!(display == "{View file_name=file}");
+    }
+
+    #[test]
+    fn previous_next() {
+        let groups = vec![
+            ViewGroup { key: "a".into(), views: vec![
+                View { name: "1".into(), file_name: "a/1".into()},
+                View { name: "2".into(), file_name: "a/2".into()},
+                View { name: "3".into(), file_name: "a/3".into()},
+            ]},
+            ViewGroup { key: "b".into(), views: vec![
+                View { name: "4".into(), file_name: "b/4".into()},
+                View { name: "5".into(), file_name: "b/5".into()},
+                View { name: "6".into(), file_name: "b/6".into()},
+            ]}
+        ];
+
+        let res = find_prev_next(&groups, "a/3");
+        assert_eq!(res.prev.map(|x| x.name), Some("2".into()));
+        assert_eq!(res.next.map(|x| x.name), Some("4".into()));
+
+        let res = find_prev_next(&groups, "b/4");
+        assert_eq!(res.prev.map(|x| x.name), Some("3".into()));
+        assert_eq!(res.next.map(|x| x.name), Some("5".into()));
+
+        let res = find_prev_next(&groups, "b/6");
+        assert_eq!(res.prev.map(|x| x.name), Some("5".into()));
+        assert_eq!(res.next.map(|x| x.name), None);
+        
+        let res = find_prev_next(&groups, "a/1");
+        assert_eq!(res.prev.map(|x| x.name), None);
+        assert_eq!(res.next.map(|x| x.name), Some("2".into()));
     }
 }
