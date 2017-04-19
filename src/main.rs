@@ -7,11 +7,8 @@ extern crate pulldown_cmark;
 extern crate regex;
 #[macro_use] extern crate serde_derive;
 
-use std::io::prelude::*;
-use std::fs::File;
 use std::path::{Path, PathBuf};
 
-use pulldown_cmark::{html, Parser};
 use rocket_contrib::Template;
 use rocket::response::NamedFile;
 
@@ -24,9 +21,11 @@ struct TemplateContext {
     title: String,
 }
 
-
-
 fn get_html(file: &Path) -> String {
+    use std::io::prelude::*;
+    use std::fs::File;
+    use pulldown_cmark::{html, Parser};
+
     let mut file = File::open(file).expect("Unable to open markdown file");
     let mut file_content = String::new();
     file.read_to_string(&mut file_content).expect("Unable to read file");

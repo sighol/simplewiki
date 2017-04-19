@@ -101,7 +101,6 @@ impl ViewFinder {
 }
 
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
