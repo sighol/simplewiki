@@ -122,6 +122,9 @@ impl PrevNextResult {
 }
 
 pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextResult {
+    let view_name = view_name.to_string();
+    let view_name = view_name.replace("\\", "/");
+    let view_name: &str = &view_name;
     let views: Vec<&View> = view_groups
             .iter()
             .flat_map(|group| group.views.iter())
@@ -137,7 +140,7 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
         prev = current;
         current = index as i32;
         next = -1i32;
-        
+
         if index + 1 < views.len() {
             next = (index + 1) as i32;
         }
@@ -203,5 +206,13 @@ mod tests {
         let res = find_prev_next(&groups, "a/2");
         assert_eq!(res.prev.map(|x| x.name), Some("1".into()));
         assert_eq!(res.next.map(|x| x.name), Some("3".into()));
+
+        let res = find_prev_next(&groups, "a\\2");
+        assert_eq!(res.prev.map(|x| x.name), Some("1".into()));
+        assert_eq!(res.next.map(|x| x.name), Some("3".into()));
+
+        let res = find_prev_next(&groups, "b/6");
+        assert_eq!(res.prev.map(|x| x.name), Some("5".into()));
+        assert_eq!(res.next.map(|x| x.name), None);
     }
 }
