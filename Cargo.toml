@@ -9,6 +9,7 @@ rocket = "*"
 rocket_codegen = "*"
 rocket_contrib = { version = "*", features = ["handlebars_templates"] }
 handlebars = "*"
+regex = "*"
 
 serde = "0.9"
 serde_derive = "0.9"
