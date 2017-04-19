@@ -67,9 +67,7 @@ fn get(category: &str, page: &str) -> Template {
         content: content,
     };
 
-    let template = "test";
-    println!("Opening template {}", template);
-    Template::render(template, &context)
+    Template::render("index", &context)
 }
 
 fn main() {

@@ -137,7 +137,7 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
         prev = current;
         current = index as i32;
         next = -1i32;
-
+        
         if index + 1 < views.len() {
             next = (index + 1) as i32;
         }
@@ -147,11 +147,11 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
         }
     }
 
-    if prev > 0i32 {
+    if prev >= 0i32 {
         result.prev = Some(views[prev as usize].clone());
     }
 
-    if next > 0i32 {
+    if next >= 0i32 {
         result.next = Some(views[next as usize].clone());
     }
 
@@ -199,5 +199,9 @@ mod tests {
         let res = find_prev_next(&groups, "a/1");
         assert_eq!(res.prev.map(|x| x.name), None);
         assert_eq!(res.next.map(|x| x.name), Some("2".into()));
+
+        let res = find_prev_next(&groups, "a/2");
+        assert_eq!(res.prev.map(|x| x.name), Some("1".into()));
+        assert_eq!(res.next.map(|x| x.name), Some("3".into()));
     }
 }
