@@ -68,6 +68,12 @@ fn static_files(file: &PathBuf) -> Option<NamedFile> {
             .ok()
 }
 
+#[get("/")]
+fn index() -> Template {
+    let vec = vec![1, 2, 3];
+    Template::render("index", &vec)
+}
+
 #[get("/<path..>", rank=2)]
 fn get(path: PathBuf) -> io::Result<WikiResponse> {
     if let Some(resp) = static_files(&path) {
@@ -104,5 +110,5 @@ fn get(path: PathBuf) -> io::Result<WikiResponse> {
 }
 
 fn main() {
-    rocket::ignite().mount("/", routes![get]).launch();
+    rocket::ignite().mount("/", routes![index, get]).launch();
 }
