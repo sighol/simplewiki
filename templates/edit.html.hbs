@@ -1,20 +1,10 @@
-{% extends "layout.html" %}
-
-{% block title %}
-	Editing {{ page }}
-{% endblock title %}
-
-{% block page_header %}
-
+{{#*inline "page_header" }}
 	<h1>Edit: <a href="/{{ page }}">{{page}}</a></h1>
-{% endblock %}
+{{/inline}}
 
-{% block head_extra %}
+{{#*inline "head_extra" }}
 	<script src="/static/js/simplemde.min.js"></script>
 	<link rel="stylesheet" href="/static/css/simplemde.min.css">
-{% endblock %}
-
-{% block content %}
 
 	<style>
 		#edit-content {
@@ -22,9 +12,10 @@
 			width: 700px;
 		}
 	</style>
+{{/inline}}
 
 
-
+{{#*inline "content" }}
 	<form action="" method="post">
 		<textarea id="edit-content" name="content">{{ content }}</textarea>
 		<p>
@@ -40,4 +31,6 @@
 			tabSize: 4,
 		});
 	</script>
-{% endblock content %}
+{{/inline}}
+
+{{~> layout ~}}

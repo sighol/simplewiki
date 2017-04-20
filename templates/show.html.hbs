@@ -1,0 +1,22 @@
+{{#*inline "navbar_extra"}}
+  <ul class="nav navbar-nav navbar-right">
+    <li><a href="/{{ prev_url }}">&larr;</a></li>
+    <li><a href="/{{ next_url }}">&rarr;</a></li>
+    <li><a href="/edit/{{page}}">Edit</a></li>
+  </ul>
+{{/inline}}
+
+
+{{#*inline "content"}}
+  {{{ content }}}
+{{/inline}}
+
+
+{{#*inline "page_header"}}
+  <p>
+    <a href="/edit/{{page}}">Edit</a> |
+    <a href="/edit_sublime/{{page}}">Edit in sublime</a>
+  </p>
+{{/inline}}
+
+{{~> layout ~}}
