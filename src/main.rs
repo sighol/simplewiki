@@ -21,6 +21,9 @@ use rocket::request::Form;
 
 mod view;
 
+const EDITOR: &'static str = "subl";
+const WIKI_ROOT: &'static str = r"C:\Dev\wiki";
+
 #[derive(Serialize)]
 struct ShowContext {
     view_groups: Vec<view::ViewGroup>,
@@ -75,12 +78,32 @@ fn static_files(file: &PathBuf) -> Option<NamedFile> {
 }
 
 fn root() -> PathBuf {
-    PathBuf::from(r"C:\Dev\wiki")
+    PathBuf::from(WIKI_ROOT)
 }
 
 fn get_view_groups() -> Vec<view::ViewGroup> {
     let view_finder = view::ViewFinder::new(root());
     view_finder.get_groups().expect("Unable to read wiki directory")
+}
+
+#[get("/edit_editor/<path..>", rank = 1)]
+fn edit_editor(path: PathBuf) -> io::Result<Redirect> {
+    use std::process::Command;
+    let markdown = get_markdown_context(&path)?;
+    println!("Path is  {}", &markdown.file_path.display());
+
+    Command::new(EDITOR)
+        .arg(&markdown.file_path)
+        .status()?;
+
+    Ok(redirect_to_path(&path))
+}
+
+fn redirect_to_path(path: &Path) -> Redirect {
+    let path_str = path.to_str().unwrap();
+    let path_str = format!("/{}", path_str);
+    let path_str = &path_str;
+    Redirect::to(path_str)
 }
 
 #[get("/edit/<path..>", rank = 1)]
@@ -93,7 +116,7 @@ fn edit(path: PathBuf) -> io::Result<Template> {
         view_groups: get_view_groups(),
         content: markdown.file_content,
     };
-    
+
     Ok(Template::render("edit", &context))
 }
 
@@ -110,12 +133,8 @@ fn edit_post(path: PathBuf, content: Form<EditForm>) -> io::Result<Redirect> {
     println!("File path: {}", context.file_path.display());
     let mut file = File::create(context.file_path)?;
     file.write_all(new_content.as_bytes())?;
-    
-    let path_str = path.to_str().unwrap();
-    let path_str = format!("/{}", path_str);
-    let path_str = &path_str;
-    println!("Path is: {}", path_str);
-    Ok(Redirect::to(path_str))
+
+    Ok(redirect_to_path(&path))
 }
 
 #[get("/")]
@@ -140,7 +159,7 @@ fn get_markdown_context(path: &Path) -> io::Result<MarkdownContext> {
     let wiki_root = wiki_root.as_path();
 
     let page_name: String = path.to_str().unwrap().to_string();
- 
+
     let file_path = format!("{}.md", &page_name);
 
     let path = wiki_root.join(&file_path);
@@ -197,8 +216,6 @@ fn show(path: PathBuf) -> io::Result<WikiResponse> {
     WikiResponse::Template(Template::render("show", &context)).ok()
 }
 
-
-
 fn main() {
-    rocket::ignite().mount("/", routes![index, show, edit, edit_post]).launch();
+    rocket::ignite().mount("/", routes![index, show, edit, edit_post, edit_editor]).launch();
 }
