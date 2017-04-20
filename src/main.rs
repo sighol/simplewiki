@@ -1,4 +1,5 @@
 #![feature(plugin)]
+#![feature(custom_derive)]
 #![plugin(rocket_codegen)]
 
 extern crate rocket;
@@ -16,7 +17,7 @@ use std::fs::File;
 use rocket_contrib::Template;
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
-use rocket::Data;
+use rocket::request::Form;
 
 mod view;
 
@@ -96,9 +97,14 @@ fn edit(path: PathBuf) -> io::Result<Template> {
     Ok(Template::render("edit", &context))
 }
 
+#[derive(FromForm)]
+struct EditForm {
+    content: String
+}
+
 #[post("/edit/<path..>", data = "<content>")]
-fn edit_post(path: PathBuf, content: Data) -> io::Result<Redirect> {
-    let new_content = data_to_string(content)?;
+fn edit_post(path: PathBuf, content: Form<EditForm>) -> io::Result<Redirect> {
+    let new_content = content.into_inner().content;
     let context = get_markdown_context(&path)?;
 
     println!("File path: {}", context.file_path.display());
@@ -110,13 +116,6 @@ fn edit_post(path: PathBuf, content: Data) -> io::Result<Redirect> {
     let path_str = &path_str;
     println!("Path is: {}", path_str);
     Ok(Redirect::to(path_str))
-}
-
-fn data_to_string(content: Data) -> io::Result<String> {
-    let mut bfr: Vec<u8> = Vec::new();
-    content.stream_to(&mut bfr)?;
-    String::from_utf8(bfr)
-            .map_err(|_| io::Error::new(io::ErrorKind::Other, "Could not parse as UTF."))
 }
 
 #[get("/")]
