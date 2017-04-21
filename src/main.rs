@@ -6,6 +6,7 @@ extern crate rocket;
 extern crate rocket_contrib;
 extern crate pulldown_cmark;
 extern crate regex;
+extern crate clap;
 #[macro_use] extern crate serde_derive;
 
 use std::io;
@@ -18,11 +19,14 @@ use rocket_contrib::Template;
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
 use rocket::request::Form;
+use rocket::State;
 
 mod view;
 
-const EDITOR: &'static str = "subl";
-const WIKI_ROOT: &'static str = r"C:\Dev\wiki";
+struct Config {
+    editor: String,
+    wiki_root: PathBuf,
+}
 
 #[derive(Serialize)]
 struct ShowContext {
@@ -42,13 +46,11 @@ struct EditContext {
     page: String,
 }
 
-
 #[derive(Serialize)]
 struct IndexContent {
     title: String,
     view_groups: Vec<view::ViewGroup>,
 }
-
 
 enum WikiResponse {
     NamedFile(NamedFile),
@@ -70,29 +72,21 @@ impl<'a> rocket::response::Responder<'a> for WikiResponse {
     }
 }
 
-fn static_files(file: &PathBuf) -> Option<NamedFile> {
-    let wiki_root = Path::new(r"C:\Dev\wiki");
-    NamedFile::open(wiki_root.join(file))
-            .or_else(|_| NamedFile::open(file))
-            .ok()
-}
-
-fn root() -> PathBuf {
-    PathBuf::from(WIKI_ROOT)
-}
-
-fn get_view_groups() -> Vec<view::ViewGroup> {
-    let view_finder = view::ViewFinder::new(root());
+fn get_view_groups(wiki_root: &Path) -> Vec<view::ViewGroup> {
+    let view_finder = view::ViewFinder::new(wiki_root.to_owned());
     view_finder.get_groups().expect("Unable to read wiki directory")
 }
 
 #[get("/edit_editor/<path..>", rank = 1)]
-fn edit_editor(path: PathBuf) -> io::Result<Redirect> {
+fn edit_editor(path: PathBuf, config: State<Config>) -> io::Result<Redirect> {
     use std::process::Command;
-    let markdown = get_markdown_context(&path)?;
+
+    let markdown = get_markdown_context(&config.wiki_root, &path)?;
     println!("Path is  {}", &markdown.file_path.display());
 
-    Command::new(EDITOR)
+    let editor = &config.editor;
+
+    Command::new(editor)
         .arg(&markdown.file_path)
         .status()?;
 
@@ -107,13 +101,14 @@ fn redirect_to_path(path: &Path) -> Redirect {
 }
 
 #[get("/edit/<path..>", rank = 1)]
-fn edit(path: PathBuf) -> io::Result<Template> {
-    let markdown = get_markdown_context(&path)?;
+fn edit(path: PathBuf, config: State<Config>) -> io::Result<Template> {
+    let wiki_root = &config.wiki_root;
+    let markdown = get_markdown_context(wiki_root, &path)?;
 
     let context = EditContext {
         title: markdown.title,
         page: markdown.page,
-        view_groups: get_view_groups(),
+        view_groups: get_view_groups(wiki_root),
         content: markdown.file_content,
     };
 
@@ -126,9 +121,11 @@ struct EditForm {
 }
 
 #[post("/edit/<path..>", data = "<content>")]
-fn edit_post(path: PathBuf, content: Form<EditForm>) -> io::Result<Redirect> {
+fn edit_post(path: PathBuf, content: Form<EditForm>, config: State<Config>) -> io::Result<Redirect> {
     let new_content = content.into_inner().content;
-    let context = get_markdown_context(&path)?;
+
+    let wiki_root = &config.wiki_root;
+    let context = get_markdown_context(wiki_root, &path)?;
 
     println!("File path: {}", context.file_path.display());
     let mut file = File::create(context.file_path)?;
@@ -138,10 +135,10 @@ fn edit_post(path: PathBuf, content: Form<EditForm>) -> io::Result<Redirect> {
 }
 
 #[get("/")]
-fn index() -> Template {
+fn index(config: State<Config>) -> Template {
     let content = IndexContent {
         title: "Home".to_string(),
-        view_groups: get_view_groups(),
+        view_groups: get_view_groups(&config.wiki_root),
     };
 
     Template::render("index", &content)
@@ -154,10 +151,7 @@ struct MarkdownContext {
     file_content: String,
 }
 
-fn get_markdown_context(path: &Path) -> io::Result<MarkdownContext> {
-    let wiki_root = root();
-    let wiki_root = wiki_root.as_path();
-
+fn get_markdown_context(wiki_root: &Path, path: &Path) -> io::Result<MarkdownContext> {
     let page_name: String = path.to_str().unwrap().to_string();
 
     let file_path = format!("{}.md", &page_name);
@@ -195,13 +189,13 @@ fn get_html(file_content: &str) -> String {
 }
 
 #[get("/<path..>", rank = 2)]
-fn show(path: PathBuf) -> io::Result<WikiResponse> {
-    if let Some(resp) = static_files(&path) {
+fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
+    if let Some(resp) = static_files(&config.wiki_root, &path) {
         return WikiResponse::NamedFile(resp).ok();
     }
-
-    let markdown = get_markdown_context(&path)?;
-    let view_groups = get_view_groups();
+    
+    let markdown = get_markdown_context(&config.wiki_root, &path)?;
+    let view_groups = get_view_groups(&config.wiki_root);
     let prev_next = view::find_prev_next(&view_groups, &markdown.page);
 
     let context = ShowContext {
@@ -216,6 +210,49 @@ fn show(path: PathBuf) -> io::Result<WikiResponse> {
     WikiResponse::Template(Template::render("show", &context)).ok()
 }
 
+fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
+    let file_path = wiki_root.join(file);
+    NamedFile::open(file_path)
+            .or_else(|_| NamedFile::open(file))
+            .ok()
+}
+
 fn main() {
-    rocket::ignite().mount("/", routes![index, show, edit, edit_post, edit_editor]).launch();
+    use std::env;
+    use clap::{Arg, App};
+
+    let matches = App::new("simplewiki")
+            .version(env!("CARGO_PKG_VERSION"))
+            .author(env!("CARGO_PKG_AUTHORS"))
+            .arg(Arg::with_name("port")
+                .short("p")
+                .long("port")
+                .value_name("PORT")
+                .takes_value(true))
+            .arg(Arg::with_name("wiki_root")
+                    .long("wiki-root")
+                    .value_name("ROOT")
+                    .takes_value(true))
+            .arg(Arg::with_name("editor")
+                    .long("editor")
+                    .takes_value(true))
+            .get_matches();
+
+    println!("Args: {:?}", matches);
+
+    let port = matches.value_of("port").unwrap_or("8002");
+    let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
+    let editor = matches.value_of("editor").unwrap_or("subl");
+
+    let config = Config {
+        editor: editor.to_string(),
+        wiki_root: PathBuf::from(wiki_root),
+    };
+
+    env::set_var("ROCKET_PORT", port);
+    env::set_var("ROCKET_WORKERS", "128");
+    rocket::ignite()
+        .mount("/", routes![index, show, edit, edit_post, edit_editor])
+        .manage(config)
+        .launch();
 }
