@@ -57,12 +57,6 @@ enum WikiResponse {
     Template(Template),
 }
 
-impl WikiResponse {
-    fn ok(self) -> io::Result<Self> {
-        return Ok(self);
-    }
-}
-
 impl<'a> rocket::response::Responder<'a> for WikiResponse {
     fn respond(self) -> Result<rocket::Response<'a>, rocket::http::Status> {
         match self {
@@ -191,9 +185,9 @@ fn get_html(file_content: &str) -> String {
 #[get("/<path..>", rank = 2)]
 fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
     if let Some(resp) = static_files(&config.wiki_root, &path) {
-        return WikiResponse::NamedFile(resp).ok();
+        return Ok(WikiResponse::NamedFile(resp));
     }
-    
+
     let markdown = get_markdown_context(&config.wiki_root, &path)?;
     let view_groups = get_view_groups(&config.wiki_root);
     let prev_next = view::find_prev_next(&view_groups, &markdown.page);
@@ -207,7 +201,7 @@ fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
         content: get_html(&markdown.file_content),
     };
 
-    WikiResponse::Template(Template::render("show", &context)).ok()
+    Ok(WikiResponse::Template(Template::render("show", &context)))
 }
 
 fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
