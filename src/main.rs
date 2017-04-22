@@ -22,11 +22,15 @@ use rocket::request::Form;
 use rocket::State;
 
 mod view;
+mod markdown;
+
+use markdown::MarkdownContext;
 
 struct Config {
     editor: String,
     wiki_root: PathBuf,
 }
+
 
 #[derive(Serialize)]
 struct ShowContext {
@@ -38,19 +42,6 @@ struct ShowContext {
     page: String,
 }
 
-#[derive(Serialize)]
-struct EditContext {
-    view_groups: Vec<view::ViewGroup>,
-    content: String,
-    title: String,
-    page: String,
-}
-
-#[derive(Serialize)]
-struct IndexContent {
-    title: String,
-    view_groups: Vec<view::ViewGroup>,
-}
 
 enum WikiResponse {
     NamedFile(NamedFile),
@@ -66,44 +57,58 @@ impl<'a> rocket::response::Responder<'a> for WikiResponse {
     }
 }
 
+#[get("/<path..>", rank = 2)]
+fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
+    if let Some(resp) = static_files(&config.wiki_root, &path) {
+        return Ok(WikiResponse::NamedFile(resp));
+    }
+
+    let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
+    let view_groups = get_view_groups(&config.wiki_root);
+    let prev_next = view::find_prev_next(&view_groups, &markdown.page);
+
+    let context = ShowContext {
+        prev_url: prev_next.prev.map_or("".into(), |p| p.file_name),
+        next_url: prev_next.next.map_or("".into(), |p| p.file_name),
+        content: markdown.html().unwrap(),
+        title: markdown.title,
+        page: markdown.page,
+        view_groups: view_groups,
+    };
+
+    Ok(WikiResponse::Template(Template::render("show", &context)))
+}
+
+fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
+    let file_path = wiki_root.join(file);
+    NamedFile::open(file_path)
+            .or_else(|_| NamedFile::open(file))
+            .ok()
+}
+
 fn get_view_groups(wiki_root: &Path) -> Vec<view::ViewGroup> {
     let view_finder = view::ViewFinder::new(wiki_root.to_owned());
     view_finder.get_groups().expect("Unable to read wiki directory")
 }
 
-#[get("/edit_editor/<path..>", rank = 1)]
-fn edit_editor(path: PathBuf, config: State<Config>) -> io::Result<Redirect> {
-    use std::process::Command;
-
-    let markdown = get_markdown_context(&config.wiki_root, &path)?;
-    println!("Path is  {}", &markdown.file_path.display());
-
-    let editor = &config.editor;
-
-    Command::new(editor)
-        .arg(&markdown.file_path)
-        .status()?;
-
-    Ok(redirect_to_path(&path))
-}
-
-fn redirect_to_path(path: &Path) -> Redirect {
-    let path_str = path.to_str().unwrap();
-    let path_str = format!("/{}", path_str);
-    let path_str = &path_str;
-    Redirect::to(path_str)
+#[derive(Serialize)]
+struct EditContext {
+    view_groups: Vec<view::ViewGroup>,
+    content: String,
+    title: String,
+    page: String,
 }
 
 #[get("/edit/<path..>", rank = 1)]
 fn edit(path: PathBuf, config: State<Config>) -> io::Result<Template> {
     let wiki_root = &config.wiki_root;
-    let markdown = get_markdown_context(wiki_root, &path)?;
+    let markdown = MarkdownContext::new(wiki_root, &path)?;
 
     let context = EditContext {
         title: markdown.title,
         page: markdown.page,
         view_groups: get_view_groups(wiki_root),
-        content: markdown.file_content,
+        content: markdown.file_content.unwrap_or("".to_string()),
     };
 
     Ok(Template::render("edit", &context))
@@ -118,14 +123,41 @@ struct EditForm {
 fn edit_post(path: PathBuf, content: Form<EditForm>, config: State<Config>) -> io::Result<Redirect> {
     let new_content = content.into_inner().content;
 
-    let wiki_root = &config.wiki_root;
-    let context = get_markdown_context(wiki_root, &path)?;
+    let context = MarkdownContext::new(&config.wiki_root, &path)?;
 
-    println!("File path: {}", context.file_path.display());
     let mut file = File::create(context.file_path)?;
     file.write_all(new_content.as_bytes())?;
 
     Ok(redirect_to_path(&path))
+}
+
+fn redirect_to_path(path: &Path) -> Redirect {
+    let path_str = path.to_str().unwrap();
+    let path_str = format!("/{}", path_str);
+    let path_str = &path_str;
+    Redirect::to(path_str)
+}
+
+#[get("/edit_editor/<path..>", rank = 1)]
+fn edit_editor(path: PathBuf, config: State<Config>) -> io::Result<Redirect> {
+    use std::process::Command;
+
+    let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
+    println!("Path is  {}", &markdown.file_path.display());
+
+    let editor = &config.editor;
+
+    Command::new(editor)
+        .arg(&markdown.file_path)
+        .status()?;
+
+    Ok(redirect_to_path(&path))
+}
+
+#[derive(Serialize)]
+struct IndexContent {
+    title: String,
+    view_groups: Vec<view::ViewGroup>,
 }
 
 #[get("/")]
@@ -136,79 +168,6 @@ fn index(config: State<Config>) -> Template {
     };
 
     Template::render("index", &content)
-}
-
-struct MarkdownContext {
-    page: String,
-    title: String,
-    file_path: PathBuf,
-    file_content: String,
-}
-
-fn get_markdown_context(wiki_root: &Path, path: &Path) -> io::Result<MarkdownContext> {
-    let page_name: String = path.to_str().unwrap().to_string();
-
-    let file_path = format!("{}.md", &page_name);
-
-    let path = wiki_root.join(&file_path);
-    if !path.exists() {
-        let error_str = format!("The markdown file '{}' couldn't be found.", path.display());
-        return Err(io::Error::new(io::ErrorKind::Other, error_str.as_str()));
-    }
-
-    let file_content = get_file_content(&path)?;
-
-    Ok(MarkdownContext {
-        page: page_name.clone(),
-        title: page_name,
-        file_path: path,
-        file_content: file_content,
-    })
-}
-
-fn get_file_content(file: &Path) -> io::Result<String> {
-    let mut file = File::open(file)?;
-    let mut file_content = String::new();
-    file.read_to_string(&mut file_content)?;
-    Ok(file_content)
-}
-
-fn get_html(file_content: &str) -> String {
-    use pulldown_cmark::{html, Parser};
-
-    let parser = Parser::new(file_content);
-    let mut bfr = String::new();
-    html::push_html(&mut bfr, parser);
-    bfr
-}
-
-#[get("/<path..>", rank = 2)]
-fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
-    if let Some(resp) = static_files(&config.wiki_root, &path) {
-        return Ok(WikiResponse::NamedFile(resp));
-    }
-
-    let markdown = get_markdown_context(&config.wiki_root, &path)?;
-    let view_groups = get_view_groups(&config.wiki_root);
-    let prev_next = view::find_prev_next(&view_groups, &markdown.page);
-
-    let context = ShowContext {
-        prev_url: prev_next.prev.map_or("".into(), |p| p.file_name),
-        next_url: prev_next.next.map_or("".into(), |p| p.file_name),
-        title: markdown.title,
-        page: markdown.page,
-        view_groups: view_groups,
-        content: get_html(&markdown.file_content),
-    };
-
-    Ok(WikiResponse::Template(Template::render("show", &context)))
-}
-
-fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
-    let file_path = wiki_root.join(file);
-    NamedFile::open(file_path)
-            .or_else(|_| NamedFile::open(file))
-            .ok()
 }
 
 fn main() {
