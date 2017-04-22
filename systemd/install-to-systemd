@@ -1,0 +1,1 @@
+ln -sv $(pwd)/simplewiki.service /usr/lib/systemd/system/simplewiki.service

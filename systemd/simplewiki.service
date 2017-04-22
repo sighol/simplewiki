@@ -1,0 +1,11 @@
+# Inspired by http://patrakov.blogspot.no/2011/01/writing-systemd-service-files.html
+
+[Unit]
+Description=Simplewiki service
+
+[Service]
+PIDFile=/var/run/simplewiki.pid
+ExecStart=/home/sighol/workspace/simplewiki-rs/target/release/simplewiki-rs -p 8080 --wiki-root ../wiki --editor subl3
+Restart=on-abort
+WorkingDirectory=/home/sighol/workspace/simplewiki-rs
+User=sighol
