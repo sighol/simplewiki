@@ -44,6 +44,10 @@ impl MarkdownContext {
             None
         }
     }
+
+    pub fn exists(&self) -> bool {
+        self.file_path.exists()
+    }
 }
 
 fn get_file_content(file: &Path) -> io::Result<String> {

@@ -46,13 +46,15 @@ struct ShowContext {
 enum WikiResponse {
     NamedFile(NamedFile),
     Template(Template),
+    Redirect(Redirect),
 }
 
 impl<'a> rocket::response::Responder<'a> for WikiResponse {
     fn respond(self) -> Result<rocket::Response<'a>, rocket::http::Status> {
         match self {
             WikiResponse::Template(x) => x.respond(),
-            WikiResponse::NamedFile(y) => y.respond(),
+            WikiResponse::NamedFile(x) => x.respond(),
+            WikiResponse::Redirect(x) => x.respond(),
         }
     }
 }
@@ -65,18 +67,25 @@ fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
 
     let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
     let view_groups = get_view_groups(&config.wiki_root);
-    let prev_next = view::find_prev_next(&view_groups, &markdown.page);
 
-    let context = ShowContext {
-        prev_url: prev_next.prev.map_or("".into(), |p| p.file_name),
-        next_url: prev_next.next.map_or("".into(), |p| p.file_name),
-        content: markdown.html().unwrap(),
-        title: markdown.title,
-        page: markdown.page,
-        view_groups: view_groups,
-    };
+    if markdown.exists() {
+        let prev_next = view::find_prev_next(&view_groups, &markdown.page);
 
-    Ok(WikiResponse::Template(Template::render("show", &context)))
+        let context = ShowContext {
+            prev_url: prev_next.prev.map_or("".into(), |p| p.file_name),
+            next_url: prev_next.next.map_or("".into(), |p| p.file_name),
+            content: markdown.html().unwrap(),
+            title: markdown.title,
+            page: markdown.page,
+            view_groups: view_groups,
+        };
+
+        Ok(WikiResponse::Template(Template::render("show", &context)))
+    } else {
+        let mut edit_path = PathBuf::from("edit");
+        edit_path.push(&path);
+        Ok(WikiResponse::Redirect(redirect_to_path(&edit_path)))
+    }
 }
 
 fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
@@ -190,8 +199,6 @@ fn main() {
                     .long("editor")
                     .takes_value(true))
             .get_matches();
-
-    println!("Args: {:?}", matches);
 
     let port = matches.value_of("port").unwrap_or("8002");
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
