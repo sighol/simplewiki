@@ -50,11 +50,11 @@ enum WikiResponse {
 }
 
 impl<'a> rocket::response::Responder<'a> for WikiResponse {
-    fn respond(self) -> Result<rocket::Response<'a>, rocket::http::Status> {
+    fn respond_to(self, request: &rocket::Request) -> Result<rocket::Response<'a>, rocket::http::Status> {
         match self {
-            WikiResponse::Template(x) => x.respond(),
-            WikiResponse::NamedFile(x) => x.respond(),
-            WikiResponse::Redirect(x) => x.respond(),
+            WikiResponse::Template(x) => x.respond_to(request),
+            WikiResponse::NamedFile(x) => x.respond_to(request),
+            WikiResponse::Redirect(x) => x.respond_to(request),
         }
     }
 }
@@ -213,6 +213,7 @@ fn main() {
     env::set_var("ROCKET_WORKERS", "128");
     rocket::ignite()
         .mount("/", routes![index, show, edit, edit_post, edit_editor])
+        .attach(Template::fairing())
         .manage(config)
         .launch();
 }
