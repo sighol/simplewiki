@@ -1,3 +1,1 @@
-set ROCKET_WORKERS=128
-set ROCKET_PORT=3000
-.\target\debug\simplewiki-rs.exe
+.\target\debug\simplewiki-rs.exe --editor "C:\Program Files\Sublime Text 3\sublime_text.exe" --port 3000 --wiki-root "C:\Dev\wiki"
