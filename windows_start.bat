@@ -1,1 +1,1 @@
-.\target\debug\simplewiki-rs.exe --editor "C:\Program Files\Sublime Text 3\sublime_text.exe" --port 3000 --wiki-root "C:\Dev\wiki"
+.\target\release\simplewiki-rs.exe --editor "C:\Program Files\Sublime Text 3\sublime_text.exe" --port 3000 --wiki-root "C:\Dev\wiki"
