@@ -61,6 +61,14 @@ impl<'a> rocket::response::Responder<'a> for WikiResponse {
 
 #[get("/<path..>", rank = 2)]
 fn show(path: PathBuf, config: State<Config>) -> io::Result<WikiResponse> {
+    let path = {
+        let osstr = path.into_os_string();
+        let without_md = osstr.to_str().unwrap().replace(".md", "");
+        let mut p = PathBuf::new();
+        p.push(without_md);
+        p
+    };
+
     if let Some(resp) = static_files(&config.wiki_root, &path) {
         return Ok(WikiResponse::NamedFile(resp));
     }

@@ -67,7 +67,7 @@ impl ViewFinder {
         {
             let key = caps.get(1).map_or("", |m| m.as_str());
             let name = format!("{}/{}", view_group_key, key);
-            
+
             let view = View {
                 name: key.into(),
                 file_name: name.into(),
@@ -103,6 +103,21 @@ impl ViewFinder {
                     view_groups.push(view_group);
                 }
             }
+        }
+
+        let mut local_group = self.get_group(&self.path)?;
+
+        {
+            local_group.key = String::from("/");
+            for view in &mut local_group.views {
+                let mut path = PathBuf::new();
+                path.push(&view.file_name);
+                view.file_name = self.get_file_name(&path);
+            }
+        }
+
+        if local_group.views.len() > 0 {
+            view_groups.insert(0, local_group);
         }
 
         Ok(view_groups)
@@ -198,7 +213,7 @@ mod tests {
         let res = find_prev_next(&groups, "b/6");
         assert_eq!(res.prev.map(|x| x.name), Some("5".into()));
         assert_eq!(res.next.map(|x| x.name), None);
-        
+
         let res = find_prev_next(&groups, "a/1");
         assert_eq!(res.prev.map(|x| x.name), None);
         assert_eq!(res.next.map(|x| x.name), Some("2".into()));
