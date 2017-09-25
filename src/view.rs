@@ -56,12 +56,13 @@ impl ViewFinder {
         }
     }
 
-    fn get_file_name(&self, path: &Path) -> String {
-        path.file_name().and_then(|name| name.to_str()).expect("Unable to find name of folder").into()
+    fn get_file_name(&self, path: &Path) -> Option<String> {
+        let s = path.file_name().and_then(|name| name.to_str()).map(|str| str.to_string());
+        s
     }
 
     fn get_view(&self, view_group_key: &str, markdown_path: &Path) -> Option<View> {
-        let file_name= self.get_file_name(markdown_path);
+        let file_name= self.get_file_name(markdown_path).unwrap_or_else(|| ".".to_string());
 
         if let Some(caps) = self.page_name_regex.captures(&file_name)
         {
@@ -80,7 +81,7 @@ impl ViewFinder {
     }
 
     fn get_group(&self, path: &Path) -> io::Result<ViewGroup> {
-        let key = self.get_file_name(path);
+        let key = self.get_file_name(path).unwrap_or_else(|| ".".to_string());
         let mut view_group = ViewGroup::new(&key);
 
         for markdown_file in fs::read_dir(path)? {
@@ -112,7 +113,7 @@ impl ViewFinder {
             for view in &mut local_group.views {
                 let mut path = PathBuf::new();
                 path.push(&view.file_name);
-                view.file_name = self.get_file_name(&path);
+                view.file_name = self.get_file_name(&path).unwrap_or_else(|| ".".to_string());
             }
         }
 
