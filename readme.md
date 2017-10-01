@@ -7,18 +7,13 @@ supports viewing both markdown files and images.
 
 ## Usage
 
+Go to the folder you want to look at, then run `simplewiki`.
+
+For more options, run `simplewiki --help`.
+
+
+## Installation
+
 ```
-USAGE:
-    simplewiki [OPTIONS] [wiki_root]
-
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-OPTIONS:
-        --editor <editor>    Defaults to subl
-    -p, --port <PORT>
-
-ARGS:
-    <wiki_root>    Directory to serve. Default: .
+cargo install --git https://github.com/sighol/simplewiki
 ```
