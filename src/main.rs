@@ -9,6 +9,9 @@ extern crate regex;
 extern crate clap;
 #[macro_use] extern crate serde_derive;
 
+extern crate includedir;
+extern crate phf;
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -23,8 +26,10 @@ use rocket::State;
 
 mod view;
 mod markdown;
+mod static_file;
 
 use markdown::MarkdownContext;
+use static_file::StaticFile;
 
 struct Config {
     editor: String,
@@ -131,10 +136,8 @@ fn edit(path: PathBuf, config: State<Config>) -> io::Result<Template> {
 }
 
 #[get("/static/<path..>", rank=1)]
-fn static_file(path: PathBuf, config: State<Config>) -> io::Result<NamedFile> {
-    println!("static_file={:?}", &path);
-    let file_path = &config.base_path.join("static").join(path);
-    NamedFile::open(file_path)
+fn static_file(path: PathBuf, config: State<Config>) -> io::Result<StaticFile> {
+    Ok(StaticFile::new(path))
 }
 
 #[derive(FromForm)]
@@ -234,7 +237,7 @@ fn main() {
 
     env::set_var("ROCKET_PORT", port);
     env::set_var("ROCKET_WORKERS", "128");
-  
+
     env::set_var("ROCKET_TEMPLATE_DIR", template_dir.to_str().unwrap());
 
     rocket::ignite()
