@@ -208,12 +208,13 @@ fn main() {
                 .value_name("PORT")
                 .takes_value(true))
             .arg(Arg::with_name("wiki_root")
-                    .long("wiki-root")
-                    .value_name("ROOT")
-                    .takes_value(true))
+                    .index(1)
+                    .takes_value(true)
+                    .help("Directory to serve. Default: ."))
             .arg(Arg::with_name("editor")
                     .long("editor")
-                    .takes_value(true))
+                    .takes_value(true)
+                    .help("Defaults to subl"))
             .get_matches();
 
     let port = matches.value_of("port").unwrap_or("8002");

@@ -29,7 +29,8 @@
     .tocify {
         position: relative;
         width: 100%;
-        margin: 0px 0px 20px 0px;
+        margin-bottom: 20px;
+        top: 0px;
     }
 }
 
@@ -42,8 +43,7 @@
     background-color: #337ab7;
 }
 
-.tocify-item.active a
-{
+.tocify-item.active a {
     color: white;
 }
 

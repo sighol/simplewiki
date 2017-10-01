@@ -1,6 +1,6 @@
 [package]
-name = "simplewiki-rs"
-version = "0.1.0"
+name = "simplewiki"
+version = "0.2.0"
 authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
 
 [dependencies]

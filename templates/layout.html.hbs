@@ -59,16 +59,17 @@
     </nav><!-- /.navbar -->
 
     <div class="container">
+
       <div class="page-header">
-				<h1>{{ title }}</h1>
+        <h1>{{ title }}</h1>
 
         {{> page_header }}
       </div>
 
-      <div class="tocify"></div>
 
       <div id="main-content" class="container-fluid">
         <div class="col-md-10">
+          <div class="tocify"></div>
           {{> content }}
         </div>
       </div>

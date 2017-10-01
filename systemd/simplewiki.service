@@ -5,7 +5,7 @@ Description=Simplewiki service
 
 [Service]
 PIDFile=/var/run/simplewiki.pid
-ExecStart=/home/sighol/workspace/simplewiki-rs/target/release/simplewiki-rs -p 8080 --wiki-root ../wiki --editor subl3
+ExecStart=/home/sighol/workspace/simplewiki/target/release/simplewiki -p 8080 --wiki-root ../wiki --editor subl
 Restart=on-abort
-WorkingDirectory=/home/sighol/workspace/simplewiki-rs
+WorkingDirectory=/home/sighol/workspace/simplewiki
 User=sighol
