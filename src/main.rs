@@ -34,7 +34,6 @@ use static_file::StaticFile;
 struct Config {
     editor: String,
     wiki_root: PathBuf,
-    base_path: PathBuf,
 }
 
 
@@ -136,7 +135,7 @@ fn edit(path: PathBuf, config: State<Config>) -> io::Result<Template> {
 }
 
 #[get("/static/<path..>", rank=1)]
-fn static_file(path: PathBuf, config: State<Config>) -> io::Result<StaticFile> {
+fn static_file(path: PathBuf) -> io::Result<StaticFile> {
     Ok(StaticFile::new(path))
 }
 
@@ -215,28 +214,21 @@ fn main() {
             .arg(Arg::with_name("editor")
                     .long("editor")
                     .takes_value(true))
-            .arg(Arg::with_name("base_path")
-                    .long("base-path")
-                    .help("The folder where the 'static' and 'templates' folder is located")
-                    .takes_value(true))
             .get_matches();
 
     let port = matches.value_of("port").unwrap_or("8002");
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
     let editor = matches.value_of("editor").unwrap_or("subl");
-    let base_path: PathBuf = Path::new(matches.value_of("base_path").unwrap_or(".")).into();
-    let template_dir = base_path.join("templates");
 
     let config = Config {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
-        base_path: base_path,
     };
-
-    println!("base_path: {:?}", &config.base_path);
 
     env::set_var("ROCKET_PORT", port);
     env::set_var("ROCKET_WORKERS", "128");
+
+    let template_dir = static_file::extract_templates();
 
     env::set_var("ROCKET_TEMPLATE_DIR", template_dir.to_str().unwrap());
 
