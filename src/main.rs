@@ -16,6 +16,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use std::io::prelude::*;
+use std::fs;
 use std::fs::File;
 
 use rocket_contrib::Template;
@@ -150,7 +151,11 @@ fn edit_post(path: PathBuf, content: Form<EditForm>, config: State<Config>) -> i
 
     let context = MarkdownContext::new(&config.wiki_root, &path)?;
 
-    let mut file = File::create(context.file_path)?;
+    if let Some(context_folder) = Path::new(&context.file_path).parent() {
+        fs::create_dir_all(context_folder)?;
+    }
+
+    let mut file = File::create(&context.file_path)?;
     file.write_all(new_content.as_bytes())?;
 
     Ok(redirect_to_path(&path))
