@@ -222,11 +222,15 @@ fn main() {
                     .long("editor")
                     .takes_value(true)
                     .help("Defaults to subl"))
+            .arg(Arg::with_name("skip_open")
+                    .long("skip-open")
+                    .help("Don't open the wiki page in your web browser at startup"))
             .get_matches();
 
     let port = matches.value_of("port").unwrap_or("8002");
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
     let editor = matches.value_of("editor").unwrap_or("subl");
+    let show_web_page = !matches.is_present("skip_open");
 
     let config = Config {
         editor: editor.to_string(),
@@ -240,8 +244,10 @@ fn main() {
 
     env::set_var("ROCKET_TEMPLATE_DIR", template_dir.to_str().unwrap());
 
-    let path = format!("http://localhost:{}", port);
-    open::that(&path).expect("Could not open page in browser..");
+    if show_web_page {
+        let path = format!("http://localhost:{}", port);
+        open::that(&path).expect("Could not open page in browser..");
+    }
 
     rocket::ignite()
         .mount("/", routes![index, show, edit, edit_post, edit_editor, static_file])
