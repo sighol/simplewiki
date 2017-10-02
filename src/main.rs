@@ -12,6 +12,8 @@ extern crate clap;
 extern crate includedir;
 extern crate phf;
 
+extern crate open;
+
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -237,6 +239,9 @@ fn main() {
     let template_dir = static_file::extract_templates();
 
     env::set_var("ROCKET_TEMPLATE_DIR", template_dir.to_str().unwrap());
+
+    let path = format!("http://localhost:{}", port);
+    open::that(&path).expect("Could not open page in browser..");
 
     rocket::ignite()
         .mount("/", routes![index, show, edit, edit_post, edit_editor, static_file])
