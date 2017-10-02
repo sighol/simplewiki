@@ -220,6 +220,7 @@ fn main() {
                     .help("Directory to serve. Default: ."))
             .arg(Arg::with_name("editor")
                     .long("editor")
+                    .short("e")
                     .takes_value(true)
                     .help("Defaults to subl"))
             .arg(Arg::with_name("skip_open")
