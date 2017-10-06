@@ -74,7 +74,7 @@ impl<'a> rocket::response::Responder<'a> for WikiResponse {
 #[get("/markdown/<path..>")]
 fn get_markdown(path: PathBuf, config: State<SiteConfig>) -> io::Result<String> {
     let path = path_no_markdown(path);
-    
+
     let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
     markdown.html().ok_or(io::Error::new(io::ErrorKind::Other, "No markdown exists for this page..."))
 }
@@ -223,10 +223,16 @@ fn main() {
             .version(env!("CARGO_PKG_VERSION"))
             .author(env!("CARGO_PKG_AUTHORS"))
             .arg(Arg::with_name("port")
-                .short("p")
-                .long("port")
-                .value_name("PORT")
-                .takes_value(true))
+                    .short("p")
+                    .long("port")
+                    .value_name("PORT")
+                    .takes_value(true))
+            .arg(Arg::with_name("address")
+                    .short("a")
+                    .long("address")
+                    .value_name("ADDRESS")
+                    .takes_value(true)
+                    .help("The address you want the server to serve on. Default: localhost"))
             .arg(Arg::with_name("wiki_root")
                     .index(1)
                     .takes_value(true)
@@ -237,7 +243,7 @@ fn main() {
                     .takes_value(true)
                     .help("Defaults to subl"))
             .arg(Arg::with_name("skip_websocket")
-                    .long("skip-websocket")
+                    .long("no-auto-refresh")
                     .help("Don't start websocket with refresh-ability"))
             .arg(Arg::with_name("skip_open")
                     .long("skip-open")
@@ -249,6 +255,7 @@ fn main() {
     let editor = matches.value_of("editor").unwrap_or("subl");
     let show_web_page = !matches.is_present("skip_open");
     let start_websocket = !matches.is_present("skip_websocket");
+    let address = matches.value_of("address").unwrap_or("localhost");
 
     let config = SiteConfig {
         editor: editor.to_string(),
@@ -259,7 +266,7 @@ fn main() {
     let port = port.parse::<u16>().unwrap();
 
     if show_web_page {
-        let path = format!("http://localhost:{}", port);
+        let path = format!("http://{}:{}", address, port);
         open::that(&path).expect("Could not open page in browser..");
     }
 
@@ -268,11 +275,11 @@ fn main() {
     }
 
     let mut rocket_config = Config::build(Environment::Development)
-        .address("localhost")
+        .address(address)
         .port(port)
         .workers(128)
         .unwrap();
-    
+
     use rocket::config::Value;
     rocket_config.extras.insert(String::from("template_dir"), Value::String(template_dir.to_str().unwrap().to_string()));
 
