@@ -27,6 +27,10 @@ impl<T: Send + Clone> SubscriptionHandler<T> {
         }
     }
 
+    pub fn len(&self) -> usize {
+        self.subscribers.len()
+    }
+
     pub fn subscribe(&mut self) -> Receiver<T> {
         let (tx, rx) = channel();
         self.subscribers.push(tx);

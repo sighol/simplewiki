@@ -249,6 +249,9 @@ fn main() {
             .arg(Arg::with_name("skip_open")
                     .long("skip-open")
                     .help("Don't open the wiki page in your web browser at startup"))
+            .arg(Arg::with_name("verbose")
+                    .long("verbose")
+                    .short("v"))
             .get_matches();
 
     let port = matches.value_of("port").unwrap_or("8002");
@@ -257,6 +260,7 @@ fn main() {
     let show_web_page = !matches.is_present("skip_open");
     let start_websocket = !matches.is_present("skip_websocket");
     let address = matches.value_of("address").unwrap_or("localhost");
+    let verbose = matches.is_present("verbose");
 
     let config = SiteConfig {
         editor: editor.to_string(),
@@ -272,7 +276,7 @@ fn main() {
     }
 
     if start_websocket {
-        refresh_socket::listen(port as i32 + 1, wiki_root);
+        refresh_socket::listen(port as i32 + 1, wiki_root, verbose);
     }
 
     let mut rocket_config = Config::build(Environment::Development)
@@ -284,7 +288,7 @@ fn main() {
     use rocket::config::Value;
     rocket_config.extras.insert(String::from("template_dir"), Value::String(template_dir.to_str().unwrap().to_string()));
 
-    rocket::custom(rocket_config, false)
+    rocket::custom(rocket_config, verbose)
         .mount("/", routes![index, show, get_markdown, edit, edit_post, edit_editor, static_file])
         .attach(Template::fairing())
         .manage(config)

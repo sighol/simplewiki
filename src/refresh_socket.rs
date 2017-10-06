@@ -1,7 +1,7 @@
 use std::{thread, time};
 use std::sync::{Arc, Mutex};
 
-use ws::{self, Handler, Message, Result, Handshake, CloseCode, Sender};
+use ws::{self, Handler, Message, Result, CloseCode, Sender};
 
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
 
@@ -16,13 +16,7 @@ struct Server {
 
 impl Handler for Server {
 
-    fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("New connection!");
-        Ok(())
-    }
-
-    fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("Closing due to {}, code:{:?}", reason, code);
+    fn on_close(&mut self, _code: CloseCode, _reason: &str) {
         self.close_tx.send(0).unwrap();
     }
 
@@ -38,17 +32,17 @@ type SendType = i32;
 type Dispatcher = dispatch::SubscriptionHandler<SendType>;
 type ArcDispatcher = Arc<Mutex<Dispatcher>>;
 
-pub fn listen(port: i32, wiki_path: &str) {
+pub fn listen(port: i32, wiki_path: &str, verbose: bool) {
     let wiki_path = wiki_path.to_owned();
 
     let dispatcher = dispatch::SubscriptionHandler::new();
     let dispatcher = Arc::new(Mutex::new(dispatcher));
 
-    start_file_watcher(dispatcher.clone(), wiki_path);
+    start_file_watcher(dispatcher.clone(), wiki_path, verbose);
     start_ws(dispatcher.clone(), port);
 }
 
-fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String) {
+fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: bool) {
     thread::spawn(move || {
         let (watcher_tx, watcher_rx) = mpsc::channel();
         let mut watcher: RecommendedWatcher = Watcher::new(watcher_tx, time::Duration::from_secs(2)).expect("Create watcher");
@@ -58,8 +52,10 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String) {
         loop {
             match watcher_rx.recv() {
                 Ok(_event) => {
-                    println!("Watcher event received");
                     let mut dispatcher = dispatcher.lock().unwrap();
+                    if verbose {
+                        println!("Received file change event. Responding to {} subscribers", dispatcher.len());
+                    }
                     dispatcher.send_to_all(0);
                 } ,
                 Err(e) => println!("watch error: {:?}", e),
@@ -90,7 +86,6 @@ fn start_ws(dispatcher: ArcDispatcher, port: i32) {
             };
 
             thread::spawn(move || {
-                let mut counter = 0;
                 loop {
                     if let Ok(_) = close_rx.try_recv() {
                         return;
@@ -98,13 +93,10 @@ fn start_ws(dispatcher: ArcDispatcher, port: i32) {
 
                     match recv.recv() {
                         Ok(_) => {
-                            counter += 1;
-                            println!("Refresh signal found: count={}", counter);
                             let sender = ws_sender.lock().unwrap();
                             sender.send("You need to refresh").unwrap();
                         },
                         Err(_) => {
-                            println!("BREAKING OUT!");
                             return;
                         },
                     }
