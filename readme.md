@@ -17,8 +17,3 @@ For more options, run `simplewiki --help`.
 ```
 cargo install --git https://github.com/sighol/simplewiki
 ```
-hello
-
-testing testing
-
-fest

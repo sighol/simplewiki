@@ -1,40 +1,35 @@
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Sender, Receiver};
 
 pub struct SubscriptionHandler<T> where T: Send + Clone {
-    subscribers: Arc<Mutex<Vec<Sender<T>>>>,
+    subscribers: Vec<Sender<T>>,
 }
 
 impl<T: Send + Clone> SubscriptionHandler<T> {
 
     pub fn new() -> Self {
         Self {
-            subscribers: Arc::new(Mutex::new(Vec::new())),
+            subscribers: Vec::new(),
         }
     }
 
-    pub fn send_to_all(&self, value: T) {
-        let mut subscribers = self.subscribers.lock().unwrap();
-
-        let start_len = subscribers.len();
+    pub fn send_to_all(&mut self, value: T) {
+        let start_len = self.subscribers.len();
         for index in (0..start_len).map(|i| start_len - 1 - i) {
 
             let should_remove = {
-                let sub = &subscribers[index];
+                let sub = &self.subscribers[index];
                 sub.send(value.clone()).is_err()
             };
 
             if should_remove {
-                subscribers.remove(index);
+                self.subscribers.remove(index);
             }
         }
     }
 
-    pub fn subscribe(&self) -> Receiver<T> {
-        let subscribers = self.subscribers.clone();
-        let mut subscribers = subscribers.lock().unwrap();
+    pub fn subscribe(&mut self) -> Receiver<T> {
         let (tx, rx) = channel();
-        subscribers.push(tx);
+        self.subscribers.push(tx);
         rx
     }
 }

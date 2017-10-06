@@ -59,7 +59,7 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String) {
             match watcher_rx.recv() {
                 Ok(_event) => {
                     println!("Watcher event received");
-                    let dispatcher = dispatcher.lock().unwrap();
+                    let mut dispatcher = dispatcher.lock().unwrap();
                     dispatcher.send_to_all(0);
                 } ,
                 Err(e) => println!("watch error: {:?}", e),
@@ -75,7 +75,7 @@ fn start_ws(dispatcher: ArcDispatcher, port: i32) {
         let dispatcher = dispatcher.clone();
         ws::listen(&addr, |out| {
             let recv = {
-                let dispatcher = dispatcher.lock().unwrap();
+                let mut dispatcher = dispatcher.lock().unwrap();
                 dispatcher.subscribe()
             };
 
