@@ -34,6 +34,7 @@ mod view;
 mod markdown;
 mod static_file;
 mod refresh_socket;
+mod dispatch;
 
 use markdown::MarkdownContext;
 use static_file::StaticFile;

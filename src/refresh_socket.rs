@@ -3,8 +3,9 @@ use std::sync::{Arc, Mutex};
 
 use ws::{self, Handler, Message, Result, Handshake, CloseCode, Sender};
 
-use spmc;
 use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+
+use dispatch;
 
 use std::sync::mpsc;
 
@@ -14,7 +15,7 @@ struct Server {
 }
 
 impl Handler for Server {
-    
+
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("New connection!");
         Ok(())
@@ -33,11 +34,21 @@ impl Handler for Server {
     }
 }
 
-pub fn listen(port: i32, wiki_path: &str) {
-    let (tx, rx) = spmc::channel();
+type SendType = i32;
+type Dispatcher = dispatch::SubscriptionHandler<SendType>;
+type ArcDispatcher = Arc<Mutex<Dispatcher>>;
 
+pub fn listen(port: i32, wiki_path: &str) {
     let wiki_path = wiki_path.to_owned();
 
+    let dispatcher = dispatch::SubscriptionHandler::new();
+    let dispatcher = Arc::new(Mutex::new(dispatcher));
+
+    start_file_watcher(dispatcher.clone(), wiki_path);
+    start_ws(dispatcher.clone(), port);
+}
+
+fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String) {
     thread::spawn(move || {
         let (watcher_tx, watcher_rx) = mpsc::channel();
         let mut watcher: RecommendedWatcher = Watcher::new(watcher_tx, time::Duration::from_secs(2)).expect("Create watcher");
@@ -46,18 +57,27 @@ pub fn listen(port: i32, wiki_path: &str) {
 
         loop {
             match watcher_rx.recv() {
-                Ok(_event) =>{
-                    tx.send(0).expect("Could not send to tx");
+                Ok(_event) => {
+                    println!("Watcher event received");
+                    let dispatcher = dispatcher.lock().unwrap();
+                    dispatcher.send_to_all(0);
                 } ,
                 Err(e) => println!("watch error: {:?}", e),
             }
         }
     });
+}
 
+fn start_ws(dispatcher: ArcDispatcher, port: i32) {
     thread::spawn(move || {
         let addr = format!("127.0.0.1:{}", port);
+
+        let dispatcher = dispatcher.clone();
         ws::listen(&addr, |out| {
-            let recv = rx.clone();
+            let recv = {
+                let dispatcher = dispatcher.lock().unwrap();
+                dispatcher.subscribe()
+            };
 
             let sender_mutex = Arc::new(Mutex::new(out));
 
@@ -95,3 +115,4 @@ pub fn listen(port: i32, wiki_path: &str) {
         }).expect("Could not listen to web socket");
     });
 }
+
