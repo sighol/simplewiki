@@ -47,17 +47,14 @@ pub fn extract_templates() -> PathBuf {
     let tmp_dir: PathBuf = env::temp_dir().join("simplewiki");
     fs::create_dir_all(&tmp_dir).unwrap();
     for file_path in TEMPLATE_FILES.file_names() {
-
         let path = Path::new(file_path);
         let path = path.strip_prefix("templates").unwrap();
         let target_path = tmp_dir.join(path.to_str().unwrap());
-        println!("File path: {}", file_path);
 
         let content = TEMPLATE_FILES.get(file_path).unwrap().into_owned();
 
         let mut file = File::create(&target_path).unwrap();
         file.write_all(&content).unwrap();
-
     }
 
     tmp_dir

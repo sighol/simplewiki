@@ -19,7 +19,13 @@ clap = "^2.26"
 includedir = "0.2.2"
 phf = "0.7.21"
 
+# Open web browse on startup
 open = "*"
+
+# web socket that auto refreshes the wiki when the files change.
+ws = "*"
+spmc = "*"
+notify = "*"
 
 [build-dependencies]
 includedir_codegen = "0.2.2"

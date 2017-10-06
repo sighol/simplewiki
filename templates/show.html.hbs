@@ -8,7 +8,36 @@
 
 
 {{#*inline "content"}}
-  {{{ content }}}
+  <div id="content">
+    {{{ content }}}
+  </div>
+
+  <script>
+    var ws = new WebSocket("ws://localhost:8003");
+    ws.onmessage = function(event) {
+      console.log("Refreshing...");
+      
+      var url = "/markdown" + location.pathname;
+      $.get(url, function(data) {
+        $("#content").html(data);
+      });
+    };
+
+    ws.onopen = function(event) {
+      console.log("Web socket connection opened.")
+    }
+
+    ws.onclose = function(event) {
+      console.log("Web socket closed");
+    }
+
+    ws.onerror = function(event) {
+      console.log("Web socket error");
+      console.log(event);
+    }
+
+    console.log("Web socket created... Waiting...")
+  </script>
 {{/inline}}
 
 
