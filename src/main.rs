@@ -190,7 +190,6 @@ fn edit_editor(path: PathBuf, config: State<SiteConfig>) -> io::Result<Redirect>
     use std::process::Command;
 
     let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
-    println!("Path is  {}", &markdown.file_path.display());
 
     let editor = &config.editor;
 
