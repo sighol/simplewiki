@@ -32,7 +32,7 @@ type SendType = i32;
 type Dispatcher = dispatch::SubscriptionHandler<SendType>;
 type ArcDispatcher = Arc<Mutex<Dispatcher>>;
 
-pub fn listen(port: i32, wiki_path: &str, verbose: bool) {
+pub fn listen(port: u16, wiki_path: &str, verbose: bool) {
     let wiki_path = wiki_path.to_owned();
 
     let dispatcher = dispatch::SubscriptionHandler::new();
@@ -45,7 +45,7 @@ pub fn listen(port: i32, wiki_path: &str, verbose: bool) {
 fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: bool) {
     thread::spawn(move || {
         let (watcher_tx, watcher_rx) = mpsc::channel();
-        let mut watcher: RecommendedWatcher = Watcher::new(watcher_tx, time::Duration::from_secs(2)).expect("Create watcher");
+        let mut watcher: RecommendedWatcher = Watcher::new(watcher_tx, time::Duration::from_millis(500)).expect("Create watcher");
 
         watcher.watch(wiki_path, RecursiveMode::Recursive).unwrap();
 
@@ -64,7 +64,7 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: boo
     });
 }
 
-fn start_ws(dispatcher: ArcDispatcher, port: i32) {
+fn start_ws(dispatcher: ArcDispatcher, port: u16) {
     thread::spawn(move || {
         let addr = format!("127.0.0.1:{}", port);
 

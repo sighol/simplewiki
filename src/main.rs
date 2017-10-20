@@ -42,6 +42,7 @@ use static_file::StaticFile;
 struct SiteConfig {
     editor: String,
     wiki_root: PathBuf,
+    socket_port: u16,
 }
 
 
@@ -53,6 +54,7 @@ struct ShowContext {
     prev_url: String,
     next_url: String,
     page: String,
+    socket_port: u16,
 }
 
 
@@ -109,6 +111,7 @@ fn show(path: PathBuf, config: State<SiteConfig>) -> io::Result<WikiResponse> {
             title: markdown.title,
             page: markdown.page,
             view_groups: view_groups,
+            socket_port: config.socket_port,
         };
 
         Ok(WikiResponse::Template(Template::render("show", &context)))
@@ -261,13 +264,15 @@ fn main() {
     let address = matches.value_of("address").unwrap_or("localhost");
     let verbose = matches.is_present("verbose");
 
+    let port = port.parse::<u16>().unwrap();
+
     let config = SiteConfig {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
+        socket_port: port + 1,
     };
 
     let template_dir = static_file::extract_templates();
-    let port = port.parse::<u16>().unwrap();
 
     if show_web_page {
         let path = format!("http://{}:{}", address, port);
@@ -275,7 +280,7 @@ fn main() {
     }
 
     if start_websocket {
-        refresh_socket::listen(port as i32 + 1, wiki_root, verbose);
+        refresh_socket::listen(config.socket_port, wiki_root, verbose);
     }
 
     let mut rocket_config = Config::build(Environment::Development)
