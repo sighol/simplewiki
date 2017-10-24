@@ -35,6 +35,7 @@ mod markdown;
 mod static_file;
 mod refresh_socket;
 mod dispatch;
+mod free_port;
 
 use markdown::MarkdownContext;
 use static_file::StaticFile;
@@ -264,12 +265,16 @@ fn main() {
     let address = matches.value_of("address").unwrap_or("localhost");
     let verbose = matches.is_present("verbose");
 
-    let port = port.parse::<u16>().unwrap();
+    let port = if let Some(port_value) = matches.value_of("port") {
+        port_value.parse::<u16>().unwrap()
+    } else {
+        free_port::get_free_port().expect("Couldn't find free port for rocket")
+    };
 
     let config = SiteConfig {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
-        socket_port: port + 1,
+        socket_port: free_port::get_free_port().expect("Couldn't find free port for web socket"),
     };
 
     let template_dir = static_file::extract_templates();
