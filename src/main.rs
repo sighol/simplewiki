@@ -257,7 +257,6 @@ fn main() {
                     .short("v"))
             .get_matches();
 
-    let port = matches.value_of("port").unwrap_or("8002");
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
     let editor = matches.value_of("editor").unwrap_or("subl");
     let show_web_page = !matches.is_present("skip_open");

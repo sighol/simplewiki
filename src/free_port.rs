@@ -1,5 +1,4 @@
 use std::net::{SocketAddrV4, Ipv4Addr, TcpListener};
-use std::io::Read;
 use std::io;
 
 pub fn get_free_port() -> io::Result<u16> {
