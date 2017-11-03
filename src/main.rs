@@ -2,12 +2,16 @@
 #![feature(custom_derive)]
 #![plugin(rocket_codegen)]
 
+// `error_chain!` can recurse deeply
+#![recursion_limit = "1024"]
+
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate pulldown_cmark;
 extern crate regex;
 extern crate clap;
 #[macro_use] extern crate serde_derive;
+#[macro_use] extern crate error_chain;
 
 extern crate includedir;
 extern crate phf;
@@ -40,6 +44,12 @@ mod free_port;
 use markdown::MarkdownContext;
 use static_file::StaticFile;
 
+mod errors {
+    error_chain!{}
+}
+
+use errors::*;
+
 struct SiteConfig {
     editor: String,
     wiki_root: PathBuf,
@@ -66,7 +76,7 @@ enum WikiResponse {
 }
 
 impl<'a> rocket::response::Responder<'a> for WikiResponse {
-    fn respond_to(self, request: &rocket::Request) -> Result<rocket::Response<'a>, rocket::http::Status> {
+    fn respond_to(self, request: &rocket::Request) -> std::result::Result<rocket::Response<'a>, rocket::http::Status> {
         match self {
             WikiResponse::Template(x) => x.respond_to(request),
             WikiResponse::NamedFile(x) => x.respond_to(request),
@@ -221,6 +231,28 @@ fn index(config: State<SiteConfig>) -> Template {
 }
 
 fn main() {
+    if let Err(ref e) = run() {
+        use std::io::Write;
+        let stderr = &mut ::std::io::stderr();
+        let errmsg = "Error writing to stderr";
+
+        writeln!(stderr, "error: {}", e).expect(errmsg);
+
+        for e in e.iter().skip(1) {
+            writeln!(stderr, "caused by: {}", e).expect(errmsg);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            writeln!(stderr, "backtrace: {:?}", backtrace).expect(errmsg);
+        }
+
+        ::std::process::exit(1);
+    }
+}
+
+fn run() -> Result<()> {
     use clap::{Arg, App};
 
     let matches = App::new("simplewiki")
@@ -265,22 +297,22 @@ fn main() {
     let verbose = matches.is_present("verbose");
 
     let port = if let Some(port_value) = matches.value_of("port") {
-        port_value.parse::<u16>().unwrap()
+        port_value.parse::<u16>().chain_err(|| "Input port was not of uint")?
     } else {
-        free_port::get_free_port().expect("Couldn't find free port for rocket")
+        free_port::get_free_port().chain_err(|| "Couldn't find free port for rocket")?
     };
 
     let config = SiteConfig {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
-        socket_port: free_port::get_free_port().expect("Couldn't find free port for web socket"),
+        socket_port: free_port::get_free_port().chain_err(|| "Couldn't find free port for web socket")?,
     };
 
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
         let path = format!("http://{}:{}", address, port);
-        open::that(&path).expect("Could not open page in browser..");
+        open::that(&path).chain_err(|| "Could not open page in browser")?;
     }
 
     if start_websocket {
@@ -294,11 +326,15 @@ fn main() {
         .unwrap();
 
     use rocket::config::Value;
-    rocket_config.extras.insert(String::from("template_dir"), Value::String(template_dir.to_str().unwrap().to_string()));
+    rocket_config.extras.insert(String::from("template_dir"), Value::String(template_dir.to_str()
+        .chain_err(|| "Unable to open template_dir")?
+        .to_string()));
 
     rocket::custom(rocket_config, verbose)
         .mount("/", routes![index, show, get_markdown, edit, edit_post, edit_editor, static_file])
         .attach(Template::fairing())
         .manage(config)
         .launch();
+
+    Ok(())
 }

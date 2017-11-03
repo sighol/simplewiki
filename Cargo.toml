@@ -27,5 +27,7 @@ ws = "*"
 spmc = "*"
 notify = "*"
 
+error-chain = "*"
+
 [build-dependencies]
 includedir_codegen = "0.2.2"
