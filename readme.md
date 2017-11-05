@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sighol/simplewiki.svg?branch=master)](https://travis-ci.org/sighol/simplewiki)
+
 # Simplewiki
 
 Simplewiki is a web server that presents a folder as a wiki page. The wiki page
