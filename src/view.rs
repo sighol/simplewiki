@@ -42,8 +42,7 @@ impl ViewGroup {
     }
 }
 
-pub struct ViewFinder
-{
+pub struct ViewFinder {
     path: PathBuf,
     page_name_regex: Regex,
 }
@@ -57,15 +56,18 @@ impl ViewFinder {
     }
 
     fn get_file_name(&self, path: &Path) -> Option<String> {
-        let s = path.file_name().and_then(|name| name.to_str()).map(|str| str.to_string());
+        let s = path.file_name().and_then(|name| name.to_str()).map(|str| {
+            str.to_string()
+        });
         s
     }
 
     fn get_view(&self, view_group_key: &str, markdown_path: &Path) -> Option<View> {
-        let file_name= self.get_file_name(markdown_path).unwrap_or_else(|| ".".to_string());
+        let file_name = self.get_file_name(markdown_path).unwrap_or_else(
+            || ".".to_string(),
+        );
 
-        if let Some(caps) = self.page_name_regex.captures(&file_name)
-        {
+        if let Some(caps) = self.page_name_regex.captures(&file_name) {
             let key = caps.get(1).map_or("", |m| m.as_str());
             let name = format!("{}/{}", view_group_key, key);
 
@@ -133,7 +135,10 @@ pub struct PrevNextResult {
 
 impl PrevNextResult {
     fn new() -> Self {
-        PrevNextResult {prev: None, next: None}
+        PrevNextResult {
+            prev: None,
+            next: None,
+        }
     }
 }
 
@@ -142,9 +147,9 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
     let view_name = view_name.replace("\\", "/");
     let view_name: &str = &view_name;
     let views: Vec<&View> = view_groups
-            .iter()
-            .flat_map(|group| group.views.iter())
-            .collect();
+        .iter()
+        .flat_map(|group| group.views.iter())
+        .collect();
 
     let mut result = PrevNextResult::new();
 
@@ -183,7 +188,10 @@ mod tests {
     use super::*;
     #[test]
     fn view_format() {
-        let view = View { name: "Sigurd".into(), file_name: "file".into()};
+        let view = View {
+            name: "Sigurd".into(),
+            file_name: "file".into(),
+        };
         let display = format!("{}", view);
         assert!(display == "{View file_name=file}");
     }
@@ -191,16 +199,40 @@ mod tests {
     #[test]
     fn previous_next() {
         let groups = vec![
-            ViewGroup { key: "a".into(), views: vec![
-                View { name: "1".into(), file_name: "a/1".into()},
-                View { name: "2".into(), file_name: "a/2".into()},
-                View { name: "3".into(), file_name: "a/3".into()},
-            ]},
-            ViewGroup { key: "b".into(), views: vec![
-                View { name: "4".into(), file_name: "b/4".into()},
-                View { name: "5".into(), file_name: "b/5".into()},
-                View { name: "6".into(), file_name: "b/6".into()},
-            ]}
+            ViewGroup {
+                key: "a".into(),
+                views: vec![
+                    View {
+                        name: "1".into(),
+                        file_name: "a/1".into(),
+                    },
+                    View {
+                        name: "2".into(),
+                        file_name: "a/2".into(),
+                    },
+                    View {
+                        name: "3".into(),
+                        file_name: "a/3".into(),
+                    },
+                ],
+            },
+            ViewGroup {
+                key: "b".into(),
+                views: vec![
+                    View {
+                        name: "4".into(),
+                        file_name: "b/4".into(),
+                    },
+                    View {
+                        name: "5".into(),
+                        file_name: "b/5".into(),
+                    },
+                    View {
+                        name: "6".into(),
+                        file_name: "b/6".into(),
+                    },
+                ],
+            },
         ];
 
         let res = find_prev_next(&groups, "a/3");

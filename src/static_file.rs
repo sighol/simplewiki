@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::io::{Write};
+use std::io::Write;
 use std::env;
 use std::fs::{self, File};
 
@@ -11,7 +11,7 @@ include!(concat!(env!("OUT_DIR"), "/generated_static.rs"));
 include!(concat!(env!("OUT_DIR"), "/generated_template.rs"));
 
 pub struct StaticFile {
-    path: PathBuf
+    path: PathBuf,
 }
 
 impl StaticFile {

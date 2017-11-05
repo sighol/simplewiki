@@ -10,8 +10,10 @@ extern crate rocket_contrib;
 extern crate pulldown_cmark;
 extern crate regex;
 extern crate clap;
-#[macro_use] extern crate serde_derive;
-#[macro_use] extern crate error_chain;
+#[macro_use]
+extern crate serde_derive;
+#[macro_use]
+extern crate error_chain;
 
 extern crate includedir;
 extern crate phf;
@@ -76,7 +78,10 @@ enum WikiResponse {
 }
 
 impl<'a> rocket::response::Responder<'a> for WikiResponse {
-    fn respond_to(self, request: &rocket::Request) -> std::result::Result<rocket::Response<'a>, rocket::http::Status> {
+    fn respond_to(
+        self,
+        request: &rocket::Request,
+    ) -> std::result::Result<rocket::Response<'a>, rocket::http::Status> {
         match self {
             WikiResponse::Template(x) => x.respond_to(request),
             WikiResponse::NamedFile(x) => x.respond_to(request),
@@ -90,7 +95,10 @@ fn get_markdown(path: PathBuf, config: State<SiteConfig>) -> io::Result<String> 
     let path = path_no_markdown(path);
 
     let markdown = MarkdownContext::new(&config.wiki_root, &path)?;
-    markdown.html().ok_or(io::Error::new(io::ErrorKind::Other, "No markdown exists for this page..."))
+    markdown.html().ok_or(io::Error::new(
+        io::ErrorKind::Other,
+        "No markdown exists for this page...",
+    ))
 }
 
 fn path_no_markdown(path: PathBuf) -> PathBuf {
@@ -140,7 +148,9 @@ fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
 
 fn get_view_groups(wiki_root: &Path) -> Vec<view::ViewGroup> {
     let view_finder = view::ViewFinder::new(wiki_root.to_owned());
-    view_finder.get_groups().expect("Unable to read wiki directory")
+    view_finder.get_groups().expect(
+        "Unable to read wiki directory",
+    )
 }
 
 #[derive(Serialize)]
@@ -166,18 +176,22 @@ fn edit(path: PathBuf, config: State<SiteConfig>) -> io::Result<Template> {
     Ok(Template::render("edit", &context))
 }
 
-#[get("/static/<path..>", rank=1)]
+#[get("/static/<path..>", rank = 1)]
 fn static_file(path: PathBuf) -> io::Result<StaticFile> {
     Ok(StaticFile::new(path))
 }
 
 #[derive(FromForm)]
 struct EditForm {
-    content: String
+    content: String,
 }
 
 #[post("/edit/<path..>", data = "<content>")]
-fn edit_post(path: PathBuf, content: Form<EditForm>, config: State<SiteConfig>) -> io::Result<Redirect> {
+fn edit_post(
+    path: PathBuf,
+    content: Form<EditForm>,
+    config: State<SiteConfig>,
+) -> io::Result<Redirect> {
     let new_content = content.into_inner().content;
 
     let context = MarkdownContext::new(&config.wiki_root, &path)?;
@@ -207,9 +221,7 @@ fn edit_editor(path: PathBuf, config: State<SiteConfig>) -> io::Result<Redirect>
 
     let editor = &config.editor;
 
-    Command::new(editor)
-        .arg(&markdown.file_path)
-        .status()?;
+    Command::new(editor).arg(&markdown.file_path).status()?;
 
     Ok(redirect_to_path(&path))
 }
@@ -256,38 +268,48 @@ fn run() -> Result<()> {
     use clap::{Arg, App};
 
     let matches = App::new("simplewiki")
-            .version(env!("CARGO_PKG_VERSION"))
-            .author(env!("CARGO_PKG_AUTHORS"))
-            .arg(Arg::with_name("port")
-                    .short("p")
-                    .long("port")
-                    .value_name("PORT")
-                    .takes_value(true))
-            .arg(Arg::with_name("address")
-                    .short("a")
-                    .long("address")
-                    .value_name("ADDRESS")
-                    .takes_value(true)
-                    .help("The address you want the server to serve on. Default: localhost"))
-            .arg(Arg::with_name("wiki_root")
-                    .index(1)
-                    .takes_value(true)
-                    .help("Directory to serve. Default: ."))
-            .arg(Arg::with_name("editor")
-                    .long("editor")
-                    .short("e")
-                    .takes_value(true)
-                    .help("Defaults to subl"))
-            .arg(Arg::with_name("skip_websocket")
-                    .long("no-auto-refresh")
-                    .help("Don't start websocket with refresh-ability"))
-            .arg(Arg::with_name("skip_open")
-                    .long("skip-open")
-                    .help("Don't open the wiki page in your web browser at startup"))
-            .arg(Arg::with_name("verbose")
-                    .long("verbose")
-                    .short("v"))
-            .get_matches();
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .arg(
+            Arg::with_name("port")
+                .short("p")
+                .long("port")
+                .value_name("PORT")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("address")
+                .short("a")
+                .long("address")
+                .value_name("ADDRESS")
+                .takes_value(true)
+                .help(
+                    "The address you want the server to serve on. Default: localhost",
+                ),
+        )
+        .arg(
+            Arg::with_name("wiki_root")
+                .index(1)
+                .takes_value(true)
+                .help("Directory to serve. Default: ."),
+        )
+        .arg(
+            Arg::with_name("editor")
+                .long("editor")
+                .short("e")
+                .takes_value(true)
+                .help("Defaults to subl"),
+        )
+        .arg(
+            Arg::with_name("skip_websocket")
+                .long("no-auto-refresh")
+                .help("Don't start websocket with refresh-ability"),
+        )
+        .arg(Arg::with_name("skip_open").long("skip-open").help(
+            "Don't open the wiki page in your web browser at startup",
+        ))
+        .arg(Arg::with_name("verbose").long("verbose").short("v"))
+        .get_matches();
 
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
     let editor = matches.value_of("editor").unwrap_or("subl");
@@ -297,22 +319,30 @@ fn run() -> Result<()> {
     let verbose = matches.is_present("verbose");
 
     let port = if let Some(port_value) = matches.value_of("port") {
-        port_value.parse::<u16>().chain_err(|| "Input port was not of uint")?
+        port_value.parse::<u16>().chain_err(
+            || "Input port was not of uint",
+        )?
     } else {
-        free_port::get_free_port().chain_err(|| "Couldn't find free port for rocket")?
+        free_port::get_free_port().chain_err(
+            || "Couldn't find free port for rocket",
+        )?
     };
 
     let config = SiteConfig {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
-        socket_port: free_port::get_free_port().chain_err(|| "Couldn't find free port for web socket")?,
+        socket_port: free_port::get_free_port().chain_err(
+            || "Couldn't find free port for web socket",
+        )?,
     };
 
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
         let path = format!("http://{}:{}", address, port);
-        open::that(&path).chain_err(|| "Could not open page in browser")?;
+        open::that(&path).chain_err(
+            || "Could not open page in browser",
+        )?;
     }
 
     if start_websocket {
@@ -326,12 +356,29 @@ fn run() -> Result<()> {
         .unwrap();
 
     use rocket::config::Value;
-    rocket_config.extras.insert(String::from("template_dir"), Value::String(template_dir.to_str()
-        .chain_err(|| "Unable to open template_dir")?
-        .to_string()));
+    rocket_config.extras.insert(
+        String::from("template_dir"),
+        Value::String(
+            template_dir
+                .to_str()
+                .chain_err(|| "Unable to open template_dir")?
+                .to_string(),
+        ),
+    );
 
     rocket::custom(rocket_config, verbose)
-        .mount("/", routes![index, show, get_markdown, edit, edit_post, edit_editor, static_file])
+        .mount(
+            "/",
+            routes![
+                index,
+                show,
+                get_markdown,
+                edit,
+                edit_post,
+                edit_editor,
+                static_file,
+            ],
+        )
         .attach(Template::fairing())
         .manage(config)
         .launch();

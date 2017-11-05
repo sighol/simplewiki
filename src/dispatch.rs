@@ -1,15 +1,15 @@
 use std::sync::mpsc::{channel, Sender, Receiver};
 
-pub struct SubscriptionHandler<T> where T: Send + Clone {
+pub struct SubscriptionHandler<T>
+where
+    T: Send + Clone,
+{
     subscribers: Vec<Sender<T>>,
 }
 
 impl<T: Send + Clone> SubscriptionHandler<T> {
-
     pub fn new() -> Self {
-        Self {
-            subscribers: Vec::new(),
-        }
+        Self { subscribers: Vec::new() }
     }
 
     pub fn send_to_all(&mut self, value: T) {
@@ -40,7 +40,7 @@ impl<T: Send + Clone> SubscriptionHandler<T> {
 
 #[cfg(test)]
 mod tests {
-    use *;
+    use ::*;
 
     #[test]
     fn it_works() {

@@ -15,7 +15,6 @@ struct Server {
 }
 
 impl Handler for Server {
-
     fn on_close(&mut self, _code: CloseCode, _reason: &str) {
         self.close_tx.send(0).unwrap();
     }
@@ -45,7 +44,8 @@ pub fn listen(port: u16, wiki_path: &str, verbose: bool) {
 fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: bool) {
     thread::spawn(move || {
         let (watcher_tx, watcher_rx) = mpsc::channel();
-        let mut watcher: RecommendedWatcher = Watcher::new(watcher_tx, time::Duration::from_millis(500)).expect("Create watcher");
+        let mut watcher: RecommendedWatcher =
+            Watcher::new(watcher_tx, time::Duration::from_millis(500)).expect("Create watcher");
 
         watcher.watch(wiki_path, RecursiveMode::Recursive).unwrap();
 
@@ -54,10 +54,13 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: boo
                 Ok(_event) => {
                     let mut dispatcher = dispatcher.lock().unwrap();
                     if verbose {
-                        println!("Received file change event. Responding to {} subscribers", dispatcher.len());
+                        println!(
+                            "Received file change event. Responding to {} subscribers",
+                            dispatcher.len()
+                        );
                     }
                     dispatcher.send_to_all(0);
-                } ,
+                }
                 Err(e) => println!("watch error: {:?}", e),
             }
         }
@@ -85,20 +88,18 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
                 close_tx: close_tx,
             };
 
-            thread::spawn(move || {
-                loop {
-                    if let Ok(_) = close_rx.try_recv() {
-                        return;
-                    }
+            thread::spawn(move || loop {
+                if let Ok(_) = close_rx.try_recv() {
+                    return;
+                }
 
-                    match recv.recv() {
-                        Ok(_) => {
-                            let sender = ws_sender.lock().unwrap();
-                            sender.send("You need to refresh").unwrap();
-                        },
-                        Err(_) => {
-                            return;
-                        },
+                match recv.recv() {
+                    Ok(_) => {
+                        let sender = ws_sender.lock().unwrap();
+                        sender.send("You need to refresh").unwrap();
+                    }
+                    Err(_) => {
+                        return;
                     }
                 }
             });
@@ -107,4 +108,3 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
         }).expect("Could not listen to web socket");
     });
 }
-
