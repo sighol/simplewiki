@@ -36,6 +36,7 @@ use rocket::response::Redirect;
 use rocket::request::Form;
 use rocket::State;
 use rocket::config::{Config, Environment};
+use rocket::http::RawStr;
 
 mod view;
 mod markdown;
@@ -244,6 +245,22 @@ fn index(config: State<SiteConfig>) -> Template {
     Template::render("index", &content)
 }
 
+#[derive(FromForm)]
+struct SearchQuery<'r> {
+    pattern: &'r RawStr,
+    dir: &'r RawStr,
+}
+
+#[get("/search?<query>")]
+fn search(query: SearchQuery) -> Template {
+    let pattern = query.pattern.as_str();
+    let dir = query.dir.as_str();
+    println!("Searched for {} in {}", pattern, dir);
+    let result = search::search(pattern, dir);
+
+    panic!("No impl")
+}
+
 fn main() {
     if let Err(ref e) = run() {
         use std::io::Write;
@@ -341,7 +358,7 @@ fn run() -> Result<()> {
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
-        let path = format!("http://{}:{}", address, port);
+        let path = format!(r"http://{}:{}/search?pattern=hei&dir=C:\Source\KCSMP-Aut\aut-app-causeandeffect\docs", address, port);
         open::that(&path).chain_err(
             || "Could not open page in browser",
         )?;
@@ -373,6 +390,7 @@ fn run() -> Result<()> {
             "/",
             routes![
                 index,
+                search,
                 show,
                 get_markdown,
                 edit,
