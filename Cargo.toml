@@ -28,6 +28,7 @@ spmc = "*"
 notify = "*"
 
 error-chain = "*"
+walkdir = "*"
 
 [build-dependencies]
 includedir_codegen = "0.2.2"

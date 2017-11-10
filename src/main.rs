@@ -21,6 +21,7 @@ extern crate ws;
 extern crate spmc;
 extern crate open;
 extern crate notify;
+extern crate walkdir;
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -42,6 +43,7 @@ mod static_file;
 mod refresh_socket;
 mod dispatch;
 mod free_port;
+mod search;
 
 use markdown::MarkdownContext;
 use static_file::StaticFile;
