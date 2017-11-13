@@ -34,7 +34,8 @@ fn is_markdown(entry: &DirEntry) -> bool {
     if entry.metadata().map(|e| e.is_dir()).unwrap_or(false) {
         true
     } else {
-        entry.file_name()
+        entry
+            .file_name()
             .to_str()
             .map(|s| s.ends_with(".md"))
             .unwrap_or(false)

@@ -358,7 +358,11 @@ fn run() -> Result<()> {
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
-        let path = format!(r"http://{}:{}/search?pattern=hei&dir=C:\Source\KCSMP-Aut\aut-app-causeandeffect\docs", address, port);
+        let path = format!(
+            r"http://{}:{}/search?pattern=hei&dir=C:\Source\KCSMP-Aut\aut-app-causeandeffect\docs",
+            address,
+            port
+        );
         open::that(&path).chain_err(
             || "Could not open page in browser",
         )?;
