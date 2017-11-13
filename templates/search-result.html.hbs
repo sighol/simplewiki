@@ -1,0 +1,26 @@
+{{#*inline "page_header" }}
+	<h1>Search result for {{ result.pattern }}</h1>
+{{/inline}}
+
+{{#*inline "head_extra" }}
+
+{{/inline}}
+
+
+{{#*inline "content" }}
+
+<div class="page-index">
+	This is a search result
+
+	{{#each result.matches }}
+		<div class="search-match">
+			<h2>File match: {{ file_name }}</h2>
+			<div class="lines">
+				{{{ html }}}
+			</div>
+		</div>
+	{{/each}}
+</div>
+{{/inline}}
+
+{{~> layout ~}}

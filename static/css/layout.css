@@ -29,3 +29,48 @@ body {
     display: block;
   }
 }
+
+.page-index .search-match {
+    border: 2px solid #ccc;
+    border-radius: 3px;
+    padding: 1em;
+}
+
+.page-index .lines {
+    background: #eee;
+    border-radius: 3px;
+
+}
+
+.page-index .match {
+    font-weight: bold;
+}
+
+.page-index td.line-number {
+    vertical-align: top;
+    text-align: right;
+    padding-right: 1em;
+    width: 40px;
+}
+
+.page-index td.line {
+    text-align: left;
+}
+
+/*
+<div class="page-index">
+	This is a search result
+
+	{{#each result.matches }}
+		<div class="search-match">
+			<h2>File match: {{ file_name }}</h2>
+			<div class="file-name">{{file_name}}</div>
+
+			<div class="lines">
+
+				{{{ html }}}
+			</div>
+		</div>
+	{{/each}}
+</div>
+*/

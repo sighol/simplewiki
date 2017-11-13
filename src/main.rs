@@ -251,32 +251,40 @@ struct SearchQuery<'r> {
     dir: &'r RawStr,
 }
 
+#[derive(Serialize)]
+struct SearchResult {
+    result: search::SearchResult,
+}
+
 #[get("/search?<query>")]
-fn search(query: SearchQuery) -> Template {
+fn search(query: SearchQuery) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
     let dir = query.dir.as_str();
-    println!("Searched for {} in {}", pattern, dir);
-    let result = search::search(pattern, dir);
+    let result = search::search(pattern, dir).chain_err(|| "Search failed")?;
 
-    panic!("No impl")
+    println!("Searching for {} in {}", pattern, dir);
+
+    let result = SearchResult { result };
+
+    Ok(Template::render("search-result", &result))
 }
 
 fn main() {
     if let Err(ref e) = run() {
         use std::io::Write;
         let stderr = &mut ::std::io::stderr();
-        let errmsg = "Error writing to stderr";
+        let error = "Error writing to stderr";
 
-        writeln!(stderr, "error: {}", e).expect(errmsg);
+        writeln!(stderr, "error: {}", e).expect(error);
 
         for e in e.iter().skip(1) {
-            writeln!(stderr, "caused by: {}", e).expect(errmsg);
+            writeln!(stderr, "caused by: {}", e).expect(error);
         }
 
         // The backtrace is not always generated. Try to run this example
         // with `RUST_BACKTRACE=1`.
         if let Some(backtrace) = e.backtrace() {
-            writeln!(stderr, "backtrace: {:?}", backtrace).expect(errmsg);
+            writeln!(stderr, "backtrace: {:?}", backtrace).expect(error);
         }
 
         ::std::process::exit(1);
@@ -358,10 +366,12 @@ fn run() -> Result<()> {
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
-        let path = format!(
-            r"http://{}:{}/search?pattern=hei&dir=C:\Source\KCSMP-Aut\aut-app-causeandeffect\docs",
+        let path =
+            format!(
+            r"http://{}:{}/search?pattern=is&dir={}",
             address,
-            port
+            port,
+            wiki_root,
         );
         open::that(&path).chain_err(
             || "Could not open page in browser",
