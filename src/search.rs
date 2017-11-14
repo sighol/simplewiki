@@ -106,8 +106,6 @@ pub fn search(pattern: &str, directory: &str) -> Result<SearchResult> {
             continue;
         }
 
-        println!("{}", entry.path().display());
-
         let re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
 
         let re2 = regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern))
@@ -141,7 +139,6 @@ pub fn search(pattern: &str, directory: &str) -> Result<SearchResult> {
                         contexts.push(search_match);
                     }
 
-                    println!("LINE: {}", &line);
                     let m = SearchMatchContext {
                         line_number: i as i32 + 1,
                         lines: vec![

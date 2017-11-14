@@ -4,6 +4,11 @@
     <li><a href="/{{ next_url }}">&rarr;</a></li>
     <li><a href="/edit/{{page}}">Edit</a></li>
   </ul>
+
+  <form action="/search" method="get" class="nav navbar-nav navbar-right" style="margin: 1em">
+    <input type="text" name="pattern" />
+    <input type="submit" value="search" />
+  </form>
 {{/inline}}
 
 

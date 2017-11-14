@@ -248,7 +248,6 @@ fn index(config: State<SiteConfig>) -> Template {
 #[derive(FromForm)]
 struct SearchQuery<'r> {
     pattern: &'r RawStr,
-    dir: &'r RawStr,
 }
 
 #[derive(Serialize)]
@@ -257,12 +256,12 @@ struct SearchResult {
 }
 
 #[get("/search?<query>")]
-fn search(query: SearchQuery) -> errors::Result<Template> {
+fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
-    let dir = query.dir.as_str();
-    let result = search::search(pattern, dir).chain_err(|| "Search failed")?;
 
-    println!("Searching for {} in {}", pattern, dir);
+    let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
+
+    let result = search::search(pattern, &dir).chain_err(|| "Search failed")?;
 
     let result = SearchResult { result };
 
@@ -368,10 +367,9 @@ fn run() -> Result<()> {
     if show_web_page {
         let path =
             format!(
-            r"http://{}:{}/search?pattern=is&dir={}",
+            r"http://{}:{}/search?pattern=is",
             address,
             port,
-            wiki_root,
         );
         open::that(&path).chain_err(
             || "Could not open page in browser",
