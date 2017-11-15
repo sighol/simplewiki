@@ -22,6 +22,12 @@ pub struct SearchResult {
 pub struct SearchFileMatch {
     pub file_name: String,
     pub file_path: PathBuf,
+    pub url: String,
+    pub contexts: Vec<SearchFileMatchContext>,
+}
+
+#[derive(Serialize)]
+pub struct SearchFileMatchContext {
     pub contexts: Vec<SearchMatchContext>,
     pub html: String,
 }
@@ -42,7 +48,7 @@ trait ToHtml {
     fn to_html(&self) -> String;
 }
 
-impl ToHtml for Vec<SearchMatchContext> {
+impl ToHtml for [SearchMatchContext] {
     fn to_html(&self) -> String {
         let mut lines = vec![];
         lines.push("<table>".to_string());
@@ -87,15 +93,15 @@ fn is_markdown(entry: &DirEntry) -> bool {
     }
 }
 
-pub fn search(pattern: &str, directory: &str) -> Result<SearchResult> {
-    let context = 3;
-
+pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
+                    where F: Fn(&Path, &Path) -> Result<String>
+ {
     let mut result = SearchResult {
         pattern: pattern.to_string(),
         matches: vec![],
         elapsed: Duration::new(0, 0),
     };
-
+ 
     let walker = WalkDir::new(directory).into_iter();
     for entry in walker.filter_entry(|e| is_markdown(e)) {
         let entry: DirEntry = entry.chain_err(
@@ -106,80 +112,103 @@ pub fn search(pattern: &str, directory: &str) -> Result<SearchResult> {
             continue;
         }
 
-        let re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
-
-        let re2 = regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern))
-            .unwrap();
-
-        if let Ok(f) = File::open(entry.path()) {
-            let mut file = BufReader::new(&f);
-
-            let lines: Vec<String> = file.lines().filter_map(|e| e.ok()).collect();
-
-            for i in 0..lines.len() {
-                let line = &lines[i];
-
-                let is_match = re.is_match(&line);
-                if is_match {
-                    let captures = re2.captures(&line).unwrap();
-                    let pre = captures.name("pre").unwrap();
-                    let match_ = captures.name("match").unwrap();
-                    let post = captures.name("post").unwrap();
-
-                    let mut contexts = vec![];
-                    let start_index = if i > context { i - context } else { 0 };
-
-                    for j in start_index..i {
-                        let line = lines[j].to_string();
-                        let search_match = SearchMatchContext {
-                            line_number: j as i32 + 1,
-                            lines: vec![SearchMatchText::Text(line)],
-                        };
-
-                        contexts.push(search_match);
-                    }
-
-                    let m = SearchMatchContext {
-                        line_number: i as i32 + 1,
-                        lines: vec![
-                            SearchMatchText::Text(pre.as_str().into()),
-                            SearchMatchText::Match(match_.as_str().into()),
-                            SearchMatchText::Text(post.as_str().into()),
-                        ],
-                    };
-
-                    contexts.push(m);
-
-                    let end_index = if i + context + 1 > lines.len() {
-                        lines.len()
-                    } else {
-                        i + context + 1
-                    };
-                    for j in i + 1..end_index {
-                        let line = lines[j].to_string();
-                        let search_match = SearchMatchContext {
-                            line_number: j as i32 + 1,
-                            lines: vec![SearchMatchText::Text(line)],
-                        };
-
-                        contexts.push(search_match);
-                    }
-
-                    let html = contexts.to_html();
-                    let fm = SearchFileMatch {
-                        file_name: entry.path().as_os_str().to_str().unwrap().to_string(),
-                        file_path: entry.path().into(),
-                        contexts,
-                        html,
-                    };
-
-
-                    result.matches.push(fm);
-                }
-
-            }
+        if let Ok(search_file_match) = search_file(entry, pattern, directory, &url)
+        {
+            result.matches.push(search_file_match);
         }
     }
 
     Ok(result)
+}
+
+const CONTEXT: usize = 3;
+
+fn search_file<F>(entry: DirEntry, pattern: &str, directory: &str, url: &F) -> Result<SearchFileMatch>
+            where F: Fn(&Path, &Path) -> Result<String> {
+
+    let pattern_re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
+    let pattern_specific_re = regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern)) .unwrap();
+
+    let f = File::open(entry.path()).chain_err(|| "Failed to open file")?;
+
+    let file = BufReader::new(&f);
+
+    let lines: Vec<String> = file.lines().filter_map(|e| e.ok()).collect();
+
+    let directory_path = Path::new(directory);
+    let url = url(&directory_path, entry.path())?;
+    let mut file_match = SearchFileMatch {
+        file_name: entry.path().as_os_str().to_str().unwrap().to_string(),
+        file_path: entry.path().into(),
+        url: url,
+        contexts: vec![],
+    };
+
+    for i in 0..lines.len() {
+        let line = &lines[i];
+
+        let is_match = pattern_re.is_match(&line);
+        if !is_match {
+            continue;
+        }
+        
+        let captures = pattern_specific_re.captures(&line).unwrap();
+        let pre = captures.name("pre").unwrap();
+        let match_ = captures.name("match").unwrap();
+        let post = captures.name("post").unwrap();
+
+        let mut contexts = vec![];
+        let start_index = if i > CONTEXT { i - CONTEXT } else { 0 };
+
+        for j in start_index..i {
+            let line = lines[j].to_string();
+            let search_match = SearchMatchContext {
+                line_number: j as i32 + 1,
+                lines: vec![SearchMatchText::Text(line)],
+            };
+
+            contexts.push(search_match);
+        }
+
+        let m = SearchMatchContext {
+            line_number: i as i32 + 1,
+            lines: vec![
+                SearchMatchText::Text(pre.as_str().into()),
+                SearchMatchText::Match(match_.as_str().into()),
+                SearchMatchText::Text(post.as_str().into()),
+            ],
+        };
+
+        contexts.push(m);
+
+        let end_index = if i + CONTEXT + 1 > lines.len() {
+            lines.len()
+        } else {
+            i + CONTEXT + 1
+        };
+        for j in i + 1..end_index {
+            let line = lines[j].to_string();
+            let search_match = SearchMatchContext {
+                line_number: j as i32 + 1,
+                lines: vec![SearchMatchText::Text(line)],
+            };
+
+            contexts.push(search_match);
+        }
+
+        let context = SearchFileMatchContext {
+            html: contexts.to_html(),
+            contexts: contexts,
+        };
+
+        file_match.contexts.push(context);
+    }
+
+    if file_match.contexts.len() > 0 {
+        return Ok(file_match);
+    }
+
+    bail!("No match");
+    
+    //.into_result().chain_err(|| "Failed somehow")
 }

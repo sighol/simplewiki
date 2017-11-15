@@ -36,7 +36,6 @@ use rocket::response::Redirect;
 use rocket::request::Form;
 use rocket::State;
 use rocket::config::{Config, Environment};
-use rocket::http::RawStr;
 
 mod view;
 mod markdown;
@@ -246,8 +245,8 @@ fn index(config: State<SiteConfig>) -> Template {
 }
 
 #[derive(FromForm)]
-struct SearchQuery<'r> {
-    pattern: &'r RawStr,
+struct SearchQuery {
+    pattern: String,
 }
 
 #[derive(Serialize)]
@@ -258,14 +257,21 @@ struct SearchResult {
 #[get("/search?<query>")]
 fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
-
     let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
-
-    let result = search::search(pattern, &dir).chain_err(|| "Search failed")?;
-
+    let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(|| "Search failed")?;
     let result = SearchResult { result };
-
     Ok(Template::render("search-result", &result))
+}
+
+fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
+    let relative_path: &Path = wiki_root.strip_prefix(file_path)
+        .chain_err(|| "Could not get relative path for result" )?;
+
+    let relative_path = relative_path.as_os_str().to_str().unwrap().to_string();
+
+    let path = relative_path.replace("\\", "/");
+    let path = path.replace(".md", "");
+    Ok(path)
 }
 
 fn main() {
@@ -367,7 +373,7 @@ fn run() -> Result<()> {
     if show_web_page {
         let path =
             format!(
-            r"http://{}:{}/search?pattern=is",
+            r"http://{}:{}",
             address,
             port,
         );

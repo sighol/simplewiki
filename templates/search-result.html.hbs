@@ -2,10 +2,12 @@
 	<h1>Search result for {{ result.pattern }}</h1>
 {{/inline}}
 
-{{#*inline "head_extra" }}
-
+{{#*inline "navbar_extra"}}
+  <form action="/search" method="get" class="nav navbar-nav navbar-right" style="margin: 1em">
+    <input type="text" name="pattern" />
+    <input type="submit" value="search" />
+  </form>
 {{/inline}}
-
 
 {{#*inline "content" }}
 
@@ -14,10 +16,15 @@
 
 	{{#each result.matches }}
 		<div class="search-match">
-			<h2>File match: {{ file_name }}</h2>
-			<div class="lines">
-				{{{ html }}}
-			</div>
+			<h3><a href="{{{url}}}">{{ url }}</a></h3>
+
+			{{#each contexts}}
+				<div style="margin: 1em"></div>
+				<hr />
+				<div class="lines">
+					{{{ html }}}
+				</div>
+			{{/each}}
 		</div>
 	{{/each}}
 </div>
