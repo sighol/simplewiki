@@ -1,11 +1,11 @@
-use std::time::Duration;
-use walkdir::WalkDir;
-use walkdir::DirEntry;
-
 use std::io::BufReader;
 use std::io::BufRead;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+
+use walkdir::{WalkDir, DirEntry};
+
+use stopwatch::Stopwatch;
 
 use regex;
 
@@ -15,7 +15,7 @@ use errors::*;
 pub struct SearchResult {
     pub pattern: String,
     pub matches: Vec<SearchFileMatch>,
-    pub elapsed: Duration,
+    pub elapsed: i64,
 }
 
 #[derive(Serialize)]
@@ -94,7 +94,7 @@ impl ToHtml for [SearchMatchContext] {
 }
 
 fn is_markdown(entry: &DirEntry) -> bool {
-    if entry.metadata().map(|e| e.is_dir()).unwrap_or(false) {
+    if entry.file_type().is_dir() {
         true
     } else {
         entry
@@ -108,10 +108,11 @@ fn is_markdown(entry: &DirEntry) -> bool {
 pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
                     where F: Fn(&Path, &Path) -> Result<String>
  {
+    let sw = Stopwatch::start_new();
     let mut result = SearchResult {
         pattern: pattern.to_string(),
         matches: vec![],
-        elapsed: Duration::new(0, 0),
+        elapsed: 0,
     };
 
     let walker = WalkDir::new(directory).into_iter();
@@ -129,6 +130,8 @@ pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
             result.matches.push(search_file_match);
         }
     }
+
+    result.elapsed = sw.elapsed_ms();
 
     Ok(result)
 }

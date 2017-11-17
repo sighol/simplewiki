@@ -4,7 +4,7 @@
 
 {{#*inline "navbar_extra"}}
   <form action="/search" method="get" class="nav navbar-nav navbar-right" style="margin: 1em">
-    <input type="text" name="pattern" />
+    <input type="text" name="pattern" value="{{ result.pattern }}" />
     <input type="submit" value="search" />
   </form>
 {{/inline}}
@@ -12,7 +12,7 @@
 {{#*inline "content" }}
 
 <div class="page-search-result">
-	This is a search result
+	Search took {{ result.elapsed }}ms
 
 	{{#each result.matches }}
 		<div class="search-match">

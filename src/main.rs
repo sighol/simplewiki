@@ -22,6 +22,7 @@ extern crate spmc;
 extern crate open;
 extern crate notify;
 extern crate walkdir;
+extern crate stopwatch;
 
 use std::io;
 use std::path::{Path, PathBuf};
