@@ -47,9 +47,10 @@ impl Responder<'static> for StaticFile {
 /// folder
 pub fn extract_templates() -> Result<PathBuf> {
     let tmp_dir: PathBuf = env::temp_dir().join("simplewiki");
-    fs::remove_dir_all(&tmp_dir).chain_err(
-        || "Failed to clear template dir",
-    )?;
+
+    // If the folder doesn't exist, it's ok if we *fail* to delete it.
+    let _ = fs::remove_dir_all(&tmp_dir);
+
     fs::create_dir_all(&tmp_dir).chain_err(
         || "Failed to create template dir",
     )?;
