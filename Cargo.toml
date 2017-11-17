@@ -7,33 +7,33 @@ authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
 debug = true
 
 [dependencies]
-pulldown-cmark = "*"
+pulldown-cmark = "^0.1.0"
 rocket = "^0.3.3"
 rocket_codegen = "^0.3.3"
 rocket_contrib = { version = "^0.3.3", features = ["tera_templates"] }
-regex = "*"
-tera = "*"
+regex = "^0.2"
+tera = "^0.10"
 
-serde = "1.*"
-serde_derive = "1.*"
-serde_json = "1.*"
+serde = "^1"
+serde_derive = "^1"
+serde_json = "^1"
 clap = "^2.26"
 
-includedir = "0.2.2"
-phf = "0.7.21"
+includedir = "^0.2.2"
+phf = "^0.7.21"
 
 # Open web browse on startup
-open = "*"
+open = "^1.2"
 
 # web socket that auto refreshes the wiki when the files change.
-ws = "*"
-spmc = "*"
-notify = "*"
+ws = "^0.7"
+spmc = "^0.2"
+notify = "^4"
 
-error-chain = "*"
-walkdir = "*"
+error-chain = "^0.11"
+walkdir = "^2"
 
-stopwatch = "0.0.7"
+stopwatch = "^0.0.7"
 
 [build-dependencies]
 includedir_codegen = "0.2.2"
