@@ -2,6 +2,7 @@ use std::io::BufReader;
 use std::io::BufRead;
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use handlebars::html_escape;
 
 use walkdir::{WalkDir, DirEntry};
 
@@ -75,9 +76,9 @@ impl ToHtml for [SearchMatchContext] {
             let match_segments: Vec<String> = m.lines
                 .iter()
                 .map(|c| match c {
-                    &SearchMatchText::Text(ref string) => string.to_string(),
+                    &SearchMatchText::Text(ref string) => html_escape(&string),
                     &SearchMatchText::Match(ref string) => {
-                        format!("<span class=\"match\">{}</span>", string)
+                        format!("<span class=\"match\">{}</span>", html_escape(&string))
                     }
                 })
                 .collect();

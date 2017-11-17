@@ -23,6 +23,7 @@ extern crate open;
 extern crate notify;
 extern crate walkdir;
 extern crate stopwatch;
+extern crate handlebars;
 
 use std::io;
 use std::path::{Path, PathBuf};
