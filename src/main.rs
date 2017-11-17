@@ -254,6 +254,7 @@ struct SearchQuery {
 #[derive(Serialize)]
 struct SearchResult {
     result: search::SearchResult,
+    title: String,
 }
 
 #[get("/search?<query>")]
@@ -261,7 +262,10 @@ fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Templ
     let pattern = query.pattern.as_str();
     let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
     let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(|| "Search failed")?;
-    let result = SearchResult { result };
+    let result = SearchResult {
+         title: format!("Search results for '{}'", &result.pattern),
+         result,
+    };
     Ok(Template::render("search-result", &result))
 }
 
