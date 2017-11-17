@@ -53,12 +53,24 @@ impl ToHtml for [SearchMatchContext] {
         let mut lines = vec![];
         lines.push("<table>".to_string());
         for m in self {
-            lines.push("<tr>".to_string());
+            let has_match = m.lines.iter().any(|c| match c {
+                &SearchMatchText::Match(_) => true,
+                _ => false,
+            });
+
+            if has_match {
+                lines.push("<tr class=\"line-match\">".to_string());
+            } else {
+                lines.push("<tr>".to_string());
+            }
+
             lines.push(format!(
                 "\t<td class=\"line-number\">{}</td>",
                 m.line_number
             ));
+
             lines.push("<td class=\"line\">".to_string());
+
 
             let match_segments: Vec<String> = m.lines
                 .iter()
@@ -101,7 +113,7 @@ pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
         matches: vec![],
         elapsed: Duration::new(0, 0),
     };
- 
+
     let walker = WalkDir::new(directory).into_iter();
     for entry in walker.filter_entry(|e| is_markdown(e)) {
         let entry: DirEntry = entry.chain_err(
@@ -126,6 +138,7 @@ const CONTEXT: usize = 3;
 fn search_file<F>(entry: DirEntry, pattern: &str, directory: &str, url: &F) -> Result<SearchFileMatch>
             where F: Fn(&Path, &Path) -> Result<String> {
 
+    let pattern = &format!("(?i){}", pattern);
     let pattern_re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
     let pattern_specific_re = regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern)) .unwrap();
 
@@ -151,7 +164,7 @@ fn search_file<F>(entry: DirEntry, pattern: &str, directory: &str, url: &F) -> R
         if !is_match {
             continue;
         }
-        
+
         let captures = pattern_specific_re.captures(&line).unwrap();
         let pre = captures.name("pre").unwrap();
         let match_ = captures.name("match").unwrap();
@@ -209,6 +222,6 @@ fn search_file<F>(entry: DirEntry, pattern: &str, directory: &str, url: &F) -> R
     }
 
     bail!("No match");
-    
+
     //.into_result().chain_err(|| "Failed somehow")
 }

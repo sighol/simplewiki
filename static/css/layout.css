@@ -30,48 +30,38 @@ body {
   }
 }
 
-.page-index .search-match {
+/* ------------- Searching -----------*/
+
+.page-search-result .search-match {
     border: 2px solid #ccc;
     border-radius: 3px;
     padding: 1em;
     margin: 0.5em;
 }
 
-.page-index .lines {
-    background: #eee;
+.page-search-result .lines {
+    background: #f9f9f9;
     border-radius: 3px;
-
 }
 
-.page-index .match {
-    font-weight: bold;
-}
 
-.page-index td.line-number {
+.page-search-result td.line-number {
     vertical-align: top;
     text-align: right;
     padding-right: 1em;
     width: 40px;
 }
 
-.page-index td.line {
+.page-search-result td.line {
     text-align: left;
 }
 
-/*
-<div class="page-index">
-	This is a search result
+.page-search-result .line-match {
+    background-color: #ccc;
+}
 
-	{{#each result.matches }}
-		<div class="search-match">
-			<h2>File match: {{ file_name }}</h2>
-			<div class="file-name">{{file_name}}</div>
-
-			<div class="lines">
-
-				{{{ html }}}
-			</div>
-		</div>
-	{{/each}}
-</div>
-*/
+.page-search-result .match {
+    font-weight: bold;
+    background-color: black;
+    color: white;
+}
