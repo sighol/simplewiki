@@ -1,3 +1,11 @@
+{{#*inline "navbar_extra"}}
+  <form action="/search" method="get" class="nav navbar-nav navbar-right" style="margin: 1em">
+    <input type="text" name="pattern" />
+    <input type="submit" value="search" />
+  </form>
+{{/inline}}
+
+
 {{#*inline "content"}}
       {{#each view_groups }}
         <div class="col-md-3"><h2>{{key}}</h2>

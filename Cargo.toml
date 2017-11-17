@@ -1,6 +1,6 @@
 [package]
 name = "simplewiki"
-version = "0.8.1"
+version = "0.9.2"
 authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
 
 [dependencies]
@@ -28,6 +28,9 @@ spmc = "*"
 notify = "*"
 
 error-chain = "*"
+walkdir = "*"
+
+stopwatch = "0.0.7"
 
 [build-dependencies]
 includedir_codegen = "0.2.2"

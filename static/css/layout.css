@@ -29,3 +29,39 @@ body {
     display: block;
   }
 }
+
+/* ------------- Searching -----------*/
+
+.page-search-result .search-match {
+    border: 2px solid #ccc;
+    border-radius: 3px;
+    padding: 1em;
+    margin: 0.5em;
+}
+
+.page-search-result .lines {
+    background: #f9f9f9;
+    border-radius: 3px;
+}
+
+
+.page-search-result td.line-number {
+    vertical-align: top;
+    text-align: right;
+    padding-right: 1em;
+    width: 40px;
+}
+
+.page-search-result td.line {
+    text-align: left;
+}
+
+.page-search-result .line-match {
+    background-color: #ccc;
+}
+
+.page-search-result .match {
+    font-weight: bold;
+    background-color: black;
+    color: white;
+}

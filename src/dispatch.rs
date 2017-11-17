@@ -40,20 +40,28 @@ impl<T: Send + Clone> SubscriptionHandler<T> {
 
 #[cfg(test)]
 mod tests {
-    use ::*;
+    use super::*;
+    use std::thread;
+    use std::time;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn it_works() {
-        println!("Hello 1");
-
-        let mut handler = SubscriptionHandler::new();
+        let handler = SubscriptionHandler::new();
+        let handler = Arc::new(Mutex::new(handler));
 
         let mut threads = vec![];
 
         for i in 0..10 {
+            let handler = handler.clone();
             let t = thread::spawn(move || {
-                let rx = handler.subscribe();
-                loop {
+
+
+                let rx = {
+                    let mut handler = handler.lock().unwrap();
+                    handler.subscribe()
+                };
+                {
                     if let Ok(next) = rx.recv() {
                         println!("Received {} on thread {}", next, i);
                     }
@@ -63,12 +71,16 @@ mod tests {
             threads.push(t);
         }
 
+        // Sleep here so that all threads are up and running.
         thread::sleep(time::Duration::from_secs(1));
 
-        handler.send_to_all(1337);
+        {
+            let mut handler = handler.lock().unwrap();
+            handler.send_to_all(1337);
+        }
 
         for t in threads {
-            t.join();
+            t.join().unwrap();
         }
     }
 }

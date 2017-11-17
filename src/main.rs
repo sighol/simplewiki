@@ -21,6 +21,9 @@ extern crate ws;
 extern crate spmc;
 extern crate open;
 extern crate notify;
+extern crate walkdir;
+extern crate stopwatch;
+extern crate handlebars;
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -42,6 +45,7 @@ mod static_file;
 mod refresh_socket;
 mod dispatch;
 mod free_port;
+mod search;
 
 use markdown::MarkdownContext;
 use static_file::StaticFile;
@@ -242,22 +246,59 @@ fn index(config: State<SiteConfig>) -> Template {
     Template::render("index", &content)
 }
 
+#[derive(FromForm)]
+struct SearchQuery {
+    pattern: String,
+}
+
+#[derive(Serialize)]
+struct SearchResult {
+    result: search::SearchResult,
+    title: String,
+}
+
+#[get("/search?<query>")]
+fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
+    let pattern = query.pattern.as_str();
+    let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
+    let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(
+        || "Search failed",
+    )?;
+    let result = SearchResult {
+        title: format!("Search results for '{}'", &result.pattern),
+        result,
+    };
+    Ok(Template::render("search-result", &result))
+}
+
+fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
+    let relative_path: &Path = wiki_root.strip_prefix(file_path).chain_err(
+        || "Could not get relative path for result",
+    )?;
+
+    let relative_path = relative_path.as_os_str().to_str().unwrap().to_string();
+
+    let path = relative_path.replace("\\", "/");
+    let path = path.replace(".md", "");
+    Ok(path)
+}
+
 fn main() {
     if let Err(ref e) = run() {
         use std::io::Write;
         let stderr = &mut ::std::io::stderr();
-        let errmsg = "Error writing to stderr";
+        let error = "Error writing to stderr";
 
-        writeln!(stderr, "error: {}", e).expect(errmsg);
+        writeln!(stderr, "error: {}", e).expect(error);
 
         for e in e.iter().skip(1) {
-            writeln!(stderr, "caused by: {}", e).expect(errmsg);
+            writeln!(stderr, "caused by: {}", e).expect(error);
         }
 
         // The backtrace is not always generated. Try to run this example
         // with `RUST_BACKTRACE=1`.
         if let Some(backtrace) = e.backtrace() {
-            writeln!(stderr, "backtrace: {:?}", backtrace).expect(errmsg);
+            writeln!(stderr, "backtrace: {:?}", backtrace).expect(error);
         }
 
         ::std::process::exit(1);
@@ -339,7 +380,12 @@ fn run() -> Result<()> {
     let template_dir = static_file::extract_templates();
 
     if show_web_page {
-        let path = format!("http://{}:{}", address, port);
+        let path =
+            format!(
+            r"http://{}:{}",
+            address,
+            port,
+        );
         open::that(&path).chain_err(
             || "Could not open page in browser",
         )?;
@@ -371,6 +417,7 @@ fn run() -> Result<()> {
             "/",
             routes![
                 index,
+                search,
                 show,
                 get_markdown,
                 edit,
