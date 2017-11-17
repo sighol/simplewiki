@@ -72,7 +72,6 @@ impl ToHtml for [SearchMatchContext] {
 
             lines.push("<td class=\"line\">".to_string());
 
-
             let match_segments: Vec<String> = m.lines
                 .iter()
                 .map(|c| match c {
