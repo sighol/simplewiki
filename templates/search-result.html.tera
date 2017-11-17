@@ -1,0 +1,25 @@
+{% extends "layout" %}
+
+{% block content %}
+  <div class="page-search-result">
+    Search took {{ result.elapsed }}ms
+
+    {% for match in result.matches %}
+      <div class="search-match">
+        <h3><a href="{{ match.url | safe}}">{{ match.url }}</a></h3>
+        {% for context in match.contexts %}
+          <div style="margin: 1em"></div>
+          <hr />
+          <div class="lines">
+            {{ context.html | safe}}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+{% endblock content %}
+
+
+
+
+

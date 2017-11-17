@@ -45,6 +45,7 @@ impl Responder<'static> for StaticFile {
 /// folder
 pub fn extract_templates() -> PathBuf {
     let tmp_dir: PathBuf = env::temp_dir().join("simplewiki");
+    fs::remove_dir_all(&tmp_dir).unwrap();
     fs::create_dir_all(&tmp_dir).unwrap();
     for file_path in TEMPLATE_FILES.file_names() {
         let path = Path::new(file_path);

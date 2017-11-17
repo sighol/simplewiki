@@ -1,0 +1,16 @@
+{% extends "layout" %}
+
+
+{% block content %}
+
+  {% for view_group in view_groups %}
+    <div class="col-md-3"><h2>{{view_group.key}}</h2>
+      <ul>
+        {% for view in view_group.views %}
+          <li><a href="/{{view.file_name}}">{{ view.name }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+
+{% endblock content %}

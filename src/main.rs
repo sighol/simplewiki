@@ -23,7 +23,7 @@ extern crate open;
 extern crate notify;
 extern crate walkdir;
 extern crate stopwatch;
-extern crate handlebars;
+extern crate tera;
 
 use std::io;
 use std::path::{Path, PathBuf};
@@ -255,6 +255,8 @@ struct SearchQuery {
 struct SearchResult {
     result: search::SearchResult,
     title: String,
+    pattern: String,
+    view_groups: Vec<view::ViewGroup>,
 }
 
 #[get("/search?<query>")]
@@ -266,10 +268,13 @@ fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Templ
     )?;
     let result = SearchResult {
         title: format!("Search results for '{}'", &result.pattern),
+        pattern: result.pattern.clone(),
         result,
+        view_groups: get_view_groups(&config.wiki_root),
     };
     Ok(Template::render("search-result", &result))
 }
+
 
 fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
     let relative_path: &Path = wiki_root.strip_prefix(file_path).chain_err(
