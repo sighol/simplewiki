@@ -107,8 +107,9 @@ fn is_markdown(entry: &DirEntry) -> bool {
 }
 
 pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
-                    where F: Fn(&Path, &Path) -> Result<String>
- {
+where
+    F: Fn(&Path, &Path) -> Result<String>,
+{
     let sw = Stopwatch::start_new();
     let mut result = SearchResult {
         pattern: pattern.to_string(),
@@ -126,8 +127,7 @@ pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
             continue;
         }
 
-        if let Ok(search_file_match) = search_file(entry, pattern, directory, &url)
-        {
+        if let Ok(search_file_match) = search_file(entry, pattern, directory, &url) {
             result.matches.push(search_file_match);
         }
     }
@@ -139,12 +139,20 @@ pub fn search<F>(pattern: &str, directory: &str, url: F) -> Result<SearchResult>
 
 const CONTEXT: usize = 3;
 
-fn search_file<F>(entry: DirEntry, pattern: &str, directory: &str, url: &F) -> Result<SearchFileMatch>
-            where F: Fn(&Path, &Path) -> Result<String> {
+fn search_file<F>(
+    entry: DirEntry,
+    pattern: &str,
+    directory: &str,
+    url: &F,
+) -> Result<SearchFileMatch>
+where
+    F: Fn(&Path, &Path) -> Result<String>,
+{
 
     let pattern = &format!("(?i){}", pattern);
     let pattern_re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
-    let pattern_specific_re = regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern)) .unwrap();
+    let pattern_specific_re =
+        regex::Regex::new(&format!("^(?P<pre>.*)(?P<match>{})(?P<post>.*)$", pattern)).unwrap();
 
     let f = File::open(entry.path()).chain_err(|| "Failed to open file")?;
 

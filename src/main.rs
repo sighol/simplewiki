@@ -261,17 +261,20 @@ struct SearchResult {
 fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
     let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
-    let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(|| "Search failed")?;
+    let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(
+        || "Search failed",
+    )?;
     let result = SearchResult {
-         title: format!("Search results for '{}'", &result.pattern),
-         result,
+        title: format!("Search results for '{}'", &result.pattern),
+        result,
     };
     Ok(Template::render("search-result", &result))
 }
 
 fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
-    let relative_path: &Path = wiki_root.strip_prefix(file_path)
-        .chain_err(|| "Could not get relative path for result" )?;
+    let relative_path: &Path = wiki_root.strip_prefix(file_path).chain_err(
+        || "Could not get relative path for result",
+    )?;
 
     let relative_path = relative_path.as_os_str().to_str().unwrap().to_string();
 
