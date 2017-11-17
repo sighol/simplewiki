@@ -382,9 +382,8 @@ fn run() -> Result<()> {
         )?,
     };
 
-    let template_dir = static_file::extract_templates().chain_err(
-        || "Failed to setup static template directory",
-    )?;
+    let template_dir = static_file::extract_templates()
+            .chain_err(|| "Failed to setup static template directory")?;
 
     if show_web_page {
         let path =

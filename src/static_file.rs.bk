@@ -7,7 +7,7 @@ use rocket::request::Request;
 use rocket::response::{Response, Responder};
 use rocket::http::{Status, ContentType};
 
-use errors::*;
+use ::errors::*;
 
 include!(concat!(env!("OUT_DIR"), "/generated_static.rs"));
 include!(concat!(env!("OUT_DIR"), "/generated_template.rs"));
@@ -47,28 +47,19 @@ impl Responder<'static> for StaticFile {
 /// folder
 pub fn extract_templates() -> Result<PathBuf> {
     let tmp_dir: PathBuf = env::temp_dir().join("simplewiki");
-    fs::remove_dir_all(&tmp_dir).chain_err(
-        || "Failed to clear template dir",
-    )?;
-    fs::create_dir_all(&tmp_dir).chain_err(
-        || "Failed to create template dir",
-    )?;
+    fs::remove_dir_all(&tmp_dir).chain_err(|| "Failed to clear template dir")?;
+    fs::create_dir_all(&tmp_dir).chain_err(|| "Failed to create template dir")?;
     for file_path in TEMPLATE_FILES.file_names() {
         let path = Path::new(file_path);
         let path = path.strip_prefix("templates").unwrap();
         let target_path = tmp_dir.join(path.to_str().unwrap());
 
-        let content = TEMPLATE_FILES
-            .get(file_path)
-            .chain_err(|| "Failed to load template file from binary")?
-            .into_owned();
+        let content = TEMPLATE_FILES.get(file_path)
+                .chain_err(|| "Failed to load template file from binary")?
+                .into_owned();
 
-        let mut file = File::create(&target_path).chain_err(
-            || "Failed to create template file",
-        )?;
-        file.write_all(&content).chain_err(
-            || "Filed to write to template file",
-        )?;
+        let mut file = File::create(&target_path).chain_err(|| "Failed to create template file")?;
+        file.write_all(&content).chain_err(|| "Filed to write to template file")?;
     }
 
     Ok(tmp_dir)
