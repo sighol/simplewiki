@@ -406,7 +406,8 @@ fn run() -> Result<()> {
         .address(address)
         .port(port)
         .workers(128)
-        .unwrap();
+        .finalize()
+        .chain_err(|| "Unable to create rocket configuration")?;
 
     use rocket::config::Value;
     rocket_config.extras.insert(
