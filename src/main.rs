@@ -382,6 +382,14 @@ fn run() -> Result<()> {
         )?,
     };
 
+    if !free_port::is_port_available(address, port) {
+        bail!(
+            "Address not available or already in use: {}:{}",
+            address,
+            port
+        );
+    }
+
     let template_dir = static_file::extract_templates().chain_err(
         || "Failed to setup static template directory",
     )?;
@@ -401,6 +409,7 @@ fn run() -> Result<()> {
     if start_websocket {
         refresh_socket::listen(config.socket_port, wiki_root, verbose);
     }
+
 
     let mut rocket_config = Config::build(Environment::Development)
         .address(address)
