@@ -12,6 +12,8 @@ use regex;
 
 use errors::*;
 
+const CONTEXT: usize = 3;
+
 #[derive(Serialize)]
 pub struct SearchResult {
     pub pattern: String,
@@ -136,8 +138,6 @@ where
     Ok(result)
 }
 
-const CONTEXT: usize = 3;
-
 fn search_file<F>(
     entry: DirEntry,
     pattern: &str,
@@ -147,7 +147,6 @@ fn search_file<F>(
 where
     F: Fn(&Path, &Path) -> Result<String>,
 {
-
     let pattern = &format!("(?i){}", pattern);
     let pattern_re = regex::Regex::new(pattern).chain_err(|| "Invalid pattern")?;
     let pattern_specific_re =
@@ -233,6 +232,4 @@ where
     }
 
     bail!("No match");
-
-    //.into_result().chain_err(|| "Failed somehow")
 }
