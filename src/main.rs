@@ -394,22 +394,19 @@ fn run() -> Result<()> {
         || "Failed to setup static template directory",
     )?;
 
+    let browser_path = format!(r"http://{}:{}", address, port);
+
     if show_web_page {
-        let path =
-            format!(
-            r"http://{}:{}",
-            address,
-            port,
-        );
-        open::that(&path).chain_err(
+        open::that(&browser_path).chain_err(
             || "Could not open page in browser",
         )?;
     }
 
+    println!("Starting webserver at {}", &browser_path);
+
     if start_websocket {
         refresh_socket::listen(config.socket_port, wiki_root, verbose);
     }
-
 
     let mut rocket_config = Config::build(Environment::Development)
         .address(address)
