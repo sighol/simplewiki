@@ -65,3 +65,14 @@ body {
     background-color: black;
     color: white;
 }
+
+/* -------- Tables ------------ */
+
+td, th {
+    padding:0.3em;
+    border: 1px solid black;
+}
+
+table {
+    border-collapse: collapse;
+}

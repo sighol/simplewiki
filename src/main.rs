@@ -1,10 +1,12 @@
-#![feature(plugin)]
-#![feature(custom_derive)]
+#![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
+#![feature(decl_macro)]
+
 
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
+#[macro_use]
 extern crate rocket;
 extern crate rocket_contrib;
 extern crate pulldown_cmark;
@@ -38,6 +40,7 @@ use rocket::response::Redirect;
 use rocket::request::Form;
 use rocket::State;
 use rocket::config::{Config, Environment};
+use rocket::http::uri::Uri;
 
 mod view;
 mod markdown;
@@ -211,10 +214,11 @@ fn edit_post(
 }
 
 fn redirect_to_path(path: &Path) -> Redirect {
+    use rocket::http::ext::IntoOwned;
     let path_str = path.to_str().unwrap();
     let path_str = format!("/{}", path_str);
-    let path_str = &path_str;
-    Redirect::to(path_str)
+    let uri = Uri::parse(&path_str).unwrap().into_owned();
+    Redirect::to(uri)
 }
 
 #[get("/edit_editor/<path..>", rank = 1)]
@@ -426,7 +430,7 @@ fn run() -> Result<()> {
         ),
     );
 
-    rocket::custom(rocket_config, verbose)
+    rocket::custom(rocket_config)
         .mount(
             "/",
             routes![
