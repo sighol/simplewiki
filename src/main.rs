@@ -1,54 +1,52 @@
 #![feature(plugin, custom_derive)]
 #![plugin(rocket_codegen)]
 #![feature(decl_macro)]
-
-
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
 #[macro_use]
 extern crate rocket;
-extern crate rocket_contrib;
+extern crate clap;
 extern crate pulldown_cmark;
 extern crate regex;
-extern crate clap;
+extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate error_chain;
 
 extern crate includedir;
-extern crate phf;
-extern crate ws;
-extern crate spmc;
-extern crate open;
 extern crate notify;
-extern crate walkdir;
+extern crate open;
+extern crate phf;
+extern crate spmc;
 extern crate stopwatch;
 extern crate tera;
+extern crate walkdir;
+extern crate ws;
 
 use std::io;
 use std::path::{Path, PathBuf};
 
-use std::io::prelude::*;
 use std::fs;
 use std::fs::File;
+use std::io::prelude::*;
 
-use rocket_contrib::Template;
-use rocket::response::NamedFile;
-use rocket::response::Redirect;
-use rocket::request::Form;
-use rocket::State;
 use rocket::config::{Config, Environment};
 use rocket::http::uri::Uri;
+use rocket::request::Form;
+use rocket::response::NamedFile;
+use rocket::response::Redirect;
+use rocket::State;
+use rocket_contrib::Template;
 
-mod view;
-mod markdown;
-mod static_file;
-mod refresh_socket;
 mod dispatch;
 mod free_port;
+mod markdown;
+mod refresh_socket;
 mod search;
+mod static_file;
+mod view;
 
 use markdown::MarkdownContext;
 use static_file::StaticFile;
@@ -65,7 +63,6 @@ struct SiteConfig {
     socket_port: u16,
 }
 
-
 #[derive(Serialize)]
 struct ShowContext {
     view_groups: Vec<view::ViewGroup>,
@@ -76,7 +73,6 @@ struct ShowContext {
     page: String,
     socket_port: u16,
 }
-
 
 enum WikiResponse {
     NamedFile(NamedFile),
@@ -155,9 +151,9 @@ fn static_files(wiki_root: &Path, file: &Path) -> Option<NamedFile> {
 
 fn get_view_groups(wiki_root: &Path) -> Vec<view::ViewGroup> {
     let view_finder = view::ViewFinder::new(wiki_root.to_owned());
-    view_finder.get_groups().expect(
-        "Unable to read wiki directory",
-    )
+    view_finder
+        .get_groups()
+        .expect("Unable to read wiki directory")
 }
 
 #[derive(Serialize)]
@@ -267,9 +263,8 @@ struct SearchResult {
 fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
     let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
-    let result: search::SearchResult = search::search(pattern, &dir, get_page_url).chain_err(
-        || "Search failed",
-    )?;
+    let result: search::SearchResult =
+        search::search(pattern, &dir, get_page_url).chain_err(|| "Search failed")?;
     let result = SearchResult {
         title: format!("Search results for '{}'", &result.pattern),
         pattern: result.pattern.clone(),
@@ -279,11 +274,10 @@ fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Templ
     Ok(Template::render("search-result", &result))
 }
 
-
 fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
-    let relative_path: &Path = wiki_root.strip_prefix(file_path).chain_err(
-        || "Could not get relative path for result",
-    )?;
+    let relative_path: &Path = wiki_root
+        .strip_prefix(file_path)
+        .chain_err(|| "Could not get relative path for result")?;
 
     let relative_path = relative_path.as_os_str().to_str().unwrap().to_string();
 
@@ -315,7 +309,7 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    use clap::{Arg, App};
+    use clap::{App, Arg};
 
     let matches = App::new("simplewiki")
         .version(env!("CARGO_PKG_VERSION"))
@@ -326,39 +320,33 @@ fn run() -> Result<()> {
                 .long("port")
                 .value_name("PORT")
                 .takes_value(true),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("address")
                 .short("a")
                 .long("address")
                 .value_name("ADDRESS")
                 .takes_value(true)
-                .help(
-                    "The address you want the server to serve on. Default: localhost",
-                ),
-        )
-        .arg(
+                .help("The address you want the server to serve on. Default: localhost"),
+        ).arg(
             Arg::with_name("wiki_root")
                 .index(1)
                 .takes_value(true)
                 .help("Directory to serve. Default: ."),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("editor")
                 .long("editor")
                 .short("e")
                 .takes_value(true)
                 .help("Defaults to subl"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("skip_websocket")
                 .long("no-auto-refresh")
                 .help("Don't start websocket with refresh-ability"),
-        )
-        .arg(Arg::with_name("skip_open").long("skip-open").help(
-            "Don't open the wiki page in your web browser at startup",
-        ))
-        .arg(Arg::with_name("verbose").long("verbose").short("v"))
+        ).arg(
+            Arg::with_name("skip_open")
+                .long("skip-open")
+                .help("Don't open the wiki page in your web browser at startup"),
+        ).arg(Arg::with_name("verbose").long("verbose").short("v"))
         .get_matches();
 
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
@@ -369,21 +357,18 @@ fn run() -> Result<()> {
     let verbose = matches.is_present("verbose");
 
     let port = if let Some(port_value) = matches.value_of("port") {
-        port_value.parse::<u16>().chain_err(
-            || "Input port was not of uint",
-        )?
+        port_value
+            .parse::<u16>()
+            .chain_err(|| "Input port was not of uint")?
     } else {
-        free_port::get_free_port().chain_err(
-            || "Couldn't find free port for rocket",
-        )?
+        free_port::get_free_port().chain_err(|| "Couldn't find free port for rocket")?
     };
 
     let config = SiteConfig {
         editor: editor.to_string(),
         wiki_root: PathBuf::from(wiki_root),
-        socket_port: free_port::get_free_port().chain_err(
-            || "Couldn't find free port for web socket",
-        )?,
+        socket_port: free_port::get_free_port()
+            .chain_err(|| "Couldn't find free port for web socket")?,
     };
 
     if !free_port::is_port_available(address, port) {
@@ -394,16 +379,13 @@ fn run() -> Result<()> {
         );
     }
 
-    let template_dir = static_file::extract_templates().chain_err(
-        || "Failed to setup static template directory",
-    )?;
+    let template_dir = static_file::extract_templates()
+        .chain_err(|| "Failed to setup static template directory")?;
 
     let browser_path = format!(r"http://{}:{}", address, port);
 
     if show_web_page {
-        open::that(&browser_path).chain_err(
-            || "Could not open page in browser",
-        )?;
+        open::that(&browser_path).chain_err(|| "Could not open page in browser")?;
     }
 
     println!("Starting webserver at {}", &browser_path);
@@ -443,8 +425,7 @@ fn run() -> Result<()> {
                 edit_editor,
                 static_file,
             ],
-        )
-        .attach(Template::fairing())
+        ).attach(Template::fairing())
         .manage(config)
         .launch();
 

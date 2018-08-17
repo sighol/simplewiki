@@ -1,11 +1,11 @@
-use std::path::{Path, PathBuf};
-use std::io::Write;
 use std::env;
 use std::fs::{self, File};
+use std::io::Write;
+use std::path::{Path, PathBuf};
 
+use rocket::http::{ContentType, Status};
 use rocket::request::Request;
-use rocket::response::{Response, Responder};
-use rocket::http::{Status, ContentType};
+use rocket::response::{Responder, Response};
 
 use errors::*;
 
@@ -51,9 +51,7 @@ pub fn extract_templates() -> Result<PathBuf> {
     // If the folder doesn't exist, it's ok if we *fail* to delete it.
     let _ = fs::remove_dir_all(&tmp_dir);
 
-    fs::create_dir_all(&tmp_dir).chain_err(
-        || "Failed to create template dir",
-    )?;
+    fs::create_dir_all(&tmp_dir).chain_err(|| "Failed to create template dir")?;
     for file_path in TEMPLATE_FILES.file_names() {
         let path = Path::new(file_path);
         let path = path.strip_prefix("templates").unwrap();
@@ -64,12 +62,9 @@ pub fn extract_templates() -> Result<PathBuf> {
             .chain_err(|| "Failed to load template file from binary")?
             .into_owned();
 
-        let mut file = File::create(&target_path).chain_err(
-            || "Failed to create template file",
-        )?;
-        file.write_all(&content).chain_err(
-            || "Filed to write to template file",
-        )?;
+        let mut file = File::create(&target_path).chain_err(|| "Failed to create template file")?;
+        file.write_all(&content)
+            .chain_err(|| "Filed to write to template file")?;
     }
 
     Ok(tmp_dir)

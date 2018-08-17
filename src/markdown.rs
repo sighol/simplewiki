@@ -1,8 +1,8 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use std::io::prelude::*;
 use std::fs::File;
+use std::io::prelude::*;
 
 pub struct MarkdownContext {
     pub page: String,

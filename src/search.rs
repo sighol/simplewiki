@@ -1,10 +1,10 @@
-use std::io::BufReader;
-use std::io::BufRead;
 use std::fs::File;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use tera::escape_html;
 
-use walkdir::{WalkDir, DirEntry};
+use walkdir::{DirEntry, WalkDir};
 
 use stopwatch::Stopwatch;
 
@@ -74,15 +74,15 @@ impl ToHtml for [SearchMatchContext] {
 
             lines.push("<td class=\"line\">".to_string());
 
-            let match_segments: Vec<String> = m.lines
+            let match_segments: Vec<String> = m
+                .lines
                 .iter()
                 .map(|c| match c {
                     &SearchMatchText::Text(ref string) => escape_html(&string),
                     &SearchMatchText::Match(ref string) => {
                         format!("<span class=\"match\">{}</span>", escape_html(&string))
                     }
-                })
-                .collect();
+                }).collect();
 
             lines.push(match_segments.join(""));
 
@@ -120,9 +120,8 @@ where
 
     let walker = WalkDir::new(directory).into_iter();
     for entry in walker.filter_entry(|e| is_markdown(e)) {
-        let entry: DirEntry = entry.chain_err(
-            || "unable to unwrap entry. Directory traversel error?",
-        )?;
+        let entry: DirEntry =
+            entry.chain_err(|| "unable to unwrap entry. Directory traversel error?")?;
 
         if entry.metadata().map(|e| e.is_dir()).unwrap_or(false) {
             continue;

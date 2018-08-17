@@ -1,9 +1,9 @@
-use std::{thread, time};
 use std::sync::{Arc, Mutex};
+use std::{thread, time};
 
-use ws::{self, Handler, Message, Result, CloseCode, Sender};
+use ws::{self, CloseCode, Handler, Message, Result, Sender};
 
-use notify::{RecommendedWatcher, Watcher, RecursiveMode};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
 use dispatch;
 

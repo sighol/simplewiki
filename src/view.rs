@@ -1,8 +1,8 @@
 use std::fmt;
 
-use std::path::{Path, PathBuf};
 use std::fs;
 use std::io;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
@@ -56,16 +56,17 @@ impl ViewFinder {
     }
 
     fn get_file_name(&self, path: &Path) -> Option<String> {
-        let s = path.file_name().and_then(|name| name.to_str()).map(|str| {
-            str.to_string()
-        });
+        let s = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(|str| str.to_string());
         s
     }
 
     fn get_view(&self, view_group_key: &str, markdown_path: &Path) -> Option<View> {
-        let file_name = self.get_file_name(markdown_path).unwrap_or_else(
-            || ".".to_string(),
-        );
+        let file_name = self
+            .get_file_name(markdown_path)
+            .unwrap_or_else(|| ".".to_string());
 
         if let Some(caps) = self.page_name_regex.captures(&file_name) {
             let key = caps.get(1).map_or("", |m| m.as_str());
@@ -181,7 +182,6 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
 
     result
 }
-
 
 #[cfg(test)]
 mod tests {
