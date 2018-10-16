@@ -394,7 +394,9 @@ fn run() -> Result<()> {
         refresh_socket::listen(config.socket_port, wiki_root, verbose);
     }
 
-    let mut rocket_config = Config::build(Environment::Development)
+    let env = if verbose { Environment::Development } else { Environment::Production };
+
+    let mut rocket_config = Config::build(env)
         .address(address)
         .port(port)
         .workers(128)

@@ -1,6 +1,6 @@
 [package]
 name = "simplewiki"
-version = "0.11.0"
+version = "0.11.2"
 authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
 
 [profile.release]
