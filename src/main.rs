@@ -211,9 +211,14 @@ fn edit_post(
 
 fn redirect_to_path(path: &Path) -> Redirect {
     use rocket::http::ext::IntoOwned;
-    let path_str = path.to_str().expect("Failed to redirect").replace("\\", "/");
+    let path_str = path
+        .to_str()
+        .expect("Failed to redirect")
+        .replace("\\", "/");
     let path_str = format!("/{}", path_str);
-    let uri = Uri::parse(&path_str).expect("Failed to create redirect URI").into_owned();
+    let uri = Uri::parse(&path_str)
+        .expect("Failed to create redirect URI")
+        .into_owned();
     Redirect::to(uri)
 }
 
@@ -394,7 +399,11 @@ fn run() -> Result<()> {
         refresh_socket::listen(config.socket_port, wiki_root, verbose);
     }
 
-    let env = if verbose { Environment::Development } else { Environment::Production };
+    let env = if verbose {
+        Environment::Development
+    } else {
+        Environment::Production
+    };
 
     let mut rocket_config = Config::build(env)
         .address(address)
