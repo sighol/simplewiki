@@ -1,5 +1,4 @@
 #![feature(plugin, custom_derive)]
-
 #![feature(decl_macro)]
 #![feature(proc_macro_hygiene)]
 // `error_chain!` can recurse deeply
@@ -7,11 +6,11 @@
 
 #[macro_use]
 extern crate rocket;
-extern crate rocket_http;
 extern crate clap;
 extern crate pulldown_cmark;
 extern crate regex;
 extern crate rocket_contrib;
+extern crate rocket_http;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
@@ -258,7 +257,6 @@ struct SearchQuery {
     pattern: String,
 }
 
-
 #[derive(Serialize)]
 struct SearchResult {
     result: search::SearchResult,
@@ -328,33 +326,39 @@ fn run() -> Result<()> {
                 .long("port")
                 .value_name("PORT")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("address")
                 .short("a")
                 .long("address")
                 .value_name("ADDRESS")
                 .takes_value(true)
                 .help("The address you want the server to serve on. Default: localhost"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("wiki_root")
                 .index(1)
                 .takes_value(true)
                 .help("Directory to serve. Default: ."),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("editor")
                 .long("editor")
                 .short("e")
                 .takes_value(true)
                 .help("Defaults to subl"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("skip_websocket")
                 .long("no-auto-refresh")
                 .help("Don't start websocket with refresh-ability"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("skip_open")
                 .long("skip-open")
                 .help("Don't open the wiki page in your web browser at startup"),
-        ).arg(Arg::with_name("verbose").long("verbose").short("v"))
+        )
+        .arg(Arg::with_name("verbose").long("verbose").short("v"))
         .get_matches();
 
     let wiki_root = matches.value_of("wiki_root").unwrap_or(".");
@@ -439,7 +443,8 @@ fn run() -> Result<()> {
                 edit_editor,
                 static_file,
             ],
-        ).attach(Template::fairing())
+        )
+        .attach(Template::fairing())
         .manage(config)
         .launch();
 

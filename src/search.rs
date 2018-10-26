@@ -82,7 +82,8 @@ impl ToHtml for [SearchMatchContext] {
                     &SearchMatchText::Match(ref string) => {
                         format!("<span class=\"match\">{}</span>", escape_html(&string))
                     }
-                }).collect();
+                })
+                .collect();
 
             lines.push(match_segments.join(""));
 

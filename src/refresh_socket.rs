@@ -105,6 +105,7 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
             });
 
             return server;
-        }).expect("Could not listen to web socket");
+        })
+        .expect("Could not listen to web socket");
     });
 }
