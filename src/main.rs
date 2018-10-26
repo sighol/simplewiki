@@ -1,11 +1,13 @@
 #![feature(plugin, custom_derive)]
-#![plugin(rocket_codegen)]
+
 #![feature(decl_macro)]
+#![feature(proc_macro_hygiene)]
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
 #[macro_use]
 extern crate rocket;
+extern crate rocket_http;
 extern crate clap;
 extern crate pulldown_cmark;
 extern crate regex;
@@ -38,7 +40,7 @@ use rocket::request::Form;
 use rocket::response::NamedFile;
 use rocket::response::Redirect;
 use rocket::State;
-use rocket_contrib::Template;
+use rocket_contrib::templates::Template;
 
 mod dispatch;
 mod free_port;
@@ -256,6 +258,7 @@ struct SearchQuery {
     pattern: String,
 }
 
+
 #[derive(Serialize)]
 struct SearchResult {
     result: search::SearchResult,
@@ -264,8 +267,8 @@ struct SearchResult {
     view_groups: Vec<view::ViewGroup>,
 }
 
-#[get("/search?<query>")]
-fn search(query: SearchQuery, config: State<SiteConfig>) -> errors::Result<Template> {
+#[get("/search?<query..>")]
+fn search(query: Form<SearchQuery>, config: State<SiteConfig>) -> errors::Result<Template> {
     let pattern = query.pattern.as_str();
     let dir = config.wiki_root.as_os_str().to_str().unwrap().to_string();
     let result: search::SearchResult =
