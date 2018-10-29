@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
 
-use errors::*;
+use crate::errors::*;
 
 pub fn is_port_available(address: &str, port: u16) -> bool {
     TcpListener::bind((address, port)).is_ok()

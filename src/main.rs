@@ -49,14 +49,14 @@ mod search;
 mod static_file;
 mod view;
 
-use markdown::MarkdownContext;
-use static_file::StaticFile;
+use crate::markdown::MarkdownContext;
+use crate::static_file::StaticFile;
 
 mod errors {
     error_chain!{}
 }
 
-use errors::*;
+use crate::errors::*;
 
 struct SiteConfig {
     editor: String,

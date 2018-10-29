@@ -5,7 +5,7 @@ use ws::{self, CloseCode, Handler, Message, Result, Sender};
 
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
-use dispatch;
+use crate::dispatch;
 
 use std::sync::mpsc;
 

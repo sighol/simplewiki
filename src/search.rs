@@ -10,7 +10,7 @@ use stopwatch::Stopwatch;
 
 use regex;
 
-use errors::*;
+use crate::errors::*;
 
 const CONTEXT: usize = 3;
 

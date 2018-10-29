@@ -7,7 +7,7 @@ use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response::{Responder, Response};
 
-use errors::*;
+use crate::errors::*;
 
 include!(concat!(env!("OUT_DIR"), "/generated_static.rs"));
 include!(concat!(env!("OUT_DIR"), "/generated_template.rs"));
