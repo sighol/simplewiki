@@ -33,10 +33,10 @@ impl MarkdownContext {
     }
 
     pub fn html(&self) -> Option<String> {
-        use pulldown_cmark::{html, Parser};
+        use pulldown_cmark::{html, Options, Parser};
 
         if let Some(ref file_content) = self.file_content {
-            let parser = Parser::new(&file_content);
+            let parser = Parser::new_ext(&file_content, Options::all());
             let mut bfr = String::new();
             html::push_html(&mut bfr, parser);
             Some(bfr)
