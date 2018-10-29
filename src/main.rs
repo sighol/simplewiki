@@ -6,25 +6,12 @@
 
 #[macro_use]
 extern crate rocket;
-extern crate clap;
-extern crate pulldown_cmark;
-extern crate regex;
-extern crate rocket_contrib;
-extern crate rocket_http;
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate error_chain;
 
-extern crate includedir;
-extern crate notify;
-extern crate open;
-extern crate phf;
-extern crate spmc;
-extern crate stopwatch;
-extern crate tera;
-extern crate walkdir;
-extern crate ws;
+use error_chain::error_chain;
 
 use std::io;
 use std::path::{Path, PathBuf};
