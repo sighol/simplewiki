@@ -60,6 +60,10 @@
             <input type="submit" value="search" />
           </form>
 
+            <ul class="nav navbar-nav navbar-right">
+              <li><button style="margin: 1em" onclick="CreatePage()">Create page</button></li>
+            </ul>
+
           {% block navbar_extra %}
 
           {% endblock navbar_extra %}
@@ -72,7 +76,7 @@
       <div class="page-header">
         <h1>{{ title }}</h1>
         {% block page_header %}
-        
+
         {% endblock page_header %}
       </div>
 
@@ -93,7 +97,14 @@
           $(".tocify").tocify({
               "showAndHide": false,
           });
+
       });
+
+      function CreatePage() {
+        var txt = window.prompt("Enter new page id");
+        window.location.href = "/edit/" + txt;
+      }
+
     </script>
   </body>
 </html>
