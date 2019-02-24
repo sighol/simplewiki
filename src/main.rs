@@ -38,7 +38,7 @@ use crate::markdown::MarkdownContext;
 use crate::static_file::StaticFile;
 
 mod errors {
-    error_chain!{}
+    error_chain! {}
 }
 
 use crate::errors::*;
