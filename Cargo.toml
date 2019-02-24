@@ -1,6 +1,6 @@
 [package]
 name = "simplewiki"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Sigurd Andreas Holsen <sighol@gmail.com>"]
 edition = "2018"
 
@@ -8,7 +8,7 @@ edition = "2018"
 debug = true
 
 [dependencies]
-pulldown-cmark = "^0.1.0"
+pulldown-cmark = "^0.2.0"
 
 rocket = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_codegen = { git = "https://github.com/SergioBenitez/Rocket" }
@@ -23,22 +23,22 @@ serde_derive = "^1"
 serde_json = "^1"
 clap = "^2.26"
 
-includedir = "0.4.0"
+includedir = "0.5.0"
 phf = "^0.7.21"
 
 # Open web browse on startup
 open = "^1.2"
 
 # web socket that auto refreshes the wiki when the files change.
-ws = "^0.7"
+ws = "^0.8"
 spmc = "^0.2"
 notify = "^4"
 
-error-chain = "^0.11"
+error-chain = "^0.12"
 walkdir = "^2"
 
 stopwatch = "^0.0.7"
 
 
 [build-dependencies]
-includedir_codegen = "0.4.0"
+includedir_codegen = "0.5.0"
