@@ -9,8 +9,6 @@ extern crate serde_derive;
 #[macro_use]
 extern crate error_chain;
 
-use error_chain::error_chain;
-
 use std::io;
 use std::path::{Path, PathBuf};
 

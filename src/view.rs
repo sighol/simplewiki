@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct View {
     pub file_name: String,
     pub name: String,
@@ -15,15 +15,6 @@ pub struct View {
 impl fmt::Display for View {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{{View file_name={}}}", &self.file_name)
-    }
-}
-
-impl Clone for View {
-    fn clone(&self) -> Self {
-        View {
-            file_name: self.file_name.clone(),
-            name: self.name.clone(),
-        }
     }
 }
 
@@ -56,11 +47,9 @@ impl ViewFinder {
     }
 
     fn get_file_name(&self, path: &Path) -> Option<String> {
-        let s = path
-            .file_name()
+        path.file_name()
             .and_then(|name| name.to_str())
-            .map(|str| str.to_string());
-        s
+            .map(|str| str.to_string())
     }
 
     fn get_view(&self, view_group_key: &str, markdown_path: &Path) -> Option<View> {
@@ -186,6 +175,7 @@ pub fn find_prev_next(view_groups: &[ViewGroup], view_name: &str) -> PrevNextRes
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn view_format() {
         let view = View {
