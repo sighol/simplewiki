@@ -1,6 +1,4 @@
-#![feature(plugin, custom_derive)]
-#![feature(decl_macro)]
-#![feature(proc_macro_hygiene)]
+#![feature(proc_macro_hygiene, decl_macro, plugin)]
 // `error_chain!` can recurse deeply
 #![recursion_limit = "1024"]
 
