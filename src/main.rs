@@ -24,7 +24,7 @@ use rocket::response::Redirect;
 use rocket::State;
 use rocket_contrib::templates::Template;
 
-mod dispatch;
+mod broadcaster;
 mod free_port;
 mod markdown;
 mod refresh_socket;

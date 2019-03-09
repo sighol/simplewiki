@@ -5,16 +5,18 @@ use ws::{self, CloseCode, Handler, Message, Result, Sender};
 
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 
-use crate::dispatch;
+use crate::broadcaster;
 
 use std::sync::mpsc;
 
-struct Server {
+struct WebSocketConnection {
+    /// Sending a message to this sender, will send to the browser.
     sender: Arc<Mutex<Sender>>,
+    /// Send a message to close the web socket down
     close_s: mpsc::Sender<i32>,
 }
 
-impl Handler for Server {
+impl Handler for WebSocketConnection {
     fn on_close(&mut self, _code: CloseCode, _reason: &str) {
         self.close_s.send(0).unwrap();
     }
@@ -28,20 +30,20 @@ impl Handler for Server {
 }
 
 type SendType = i32;
-type Dispatcher = dispatch::SubscriptionHandler<SendType>;
-type ArcDispatcher = Arc<Mutex<Dispatcher>>;
+type Broadcaster = broadcaster::Broadcaster<SendType>;
+type ArcBroadcaster = Arc<Mutex<Broadcaster>>;
 
 pub fn listen(port: u16, wiki_path: &str, verbose: bool) {
     let wiki_path = wiki_path.to_owned();
 
-    let dispatcher = dispatch::SubscriptionHandler::new();
-    let dispatcher = Arc::new(Mutex::new(dispatcher));
+    let broadcaster = broadcaster::Broadcaster::new();
+    let broadcaster = Arc::new(Mutex::new(broadcaster));
 
-    start_file_watcher(dispatcher.clone(), wiki_path, verbose);
-    start_ws(dispatcher.clone(), port);
+    start_file_watcher(broadcaster.clone(), wiki_path, verbose);
+    start_ws(broadcaster.clone(), port);
 }
 
-fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: bool) {
+fn start_file_watcher(broadcaster: ArcBroadcaster, wiki_path: String, verbose: bool) {
     thread::spawn(move || {
         let (watcher_s, watcher_r) = mpsc::channel();
         let mut watcher: RecommendedWatcher =
@@ -52,14 +54,14 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: boo
         loop {
             match watcher_r.recv() {
                 Ok(_event) => {
-                    let mut dispatcher = dispatcher.lock().unwrap();
+                    let mut broadcaster = broadcaster.lock().unwrap();
                     if verbose {
                         println!(
                             "Received file change event. Responding to {} subscribers",
-                            dispatcher.len()
+                            broadcaster.len()
                         );
                     }
-                    dispatcher.send_to_all(0);
+                    broadcaster.send_to_all(0);
                 }
                 Err(e) => println!("watch error: {:?}", e),
             }
@@ -67,33 +69,32 @@ fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: boo
     });
 }
 
-fn start_ws(dispatcher: ArcDispatcher, port: u16) {
+fn start_ws(dispatcher: ArcBroadcaster, port: u16) {
     thread::spawn(move || {
         let addr = format!("127.0.0.1:{}", port);
 
-        let dispatcher = dispatcher.clone();
+        let broadcaster = dispatcher.clone();
         ws::listen(&addr, |out| {
-            let filewatcher_receiver = {
-                let mut dispatcher = dispatcher.lock().unwrap();
-                dispatcher.subscribe()
+            let filewatcher_subscription = {
+                let mut broadcaster = broadcaster.lock().unwrap();
+                broadcaster.subscribe()
             };
 
             let sender_mutex = Arc::new(Mutex::new(out));
 
-            let ws_sender = sender_mutex.clone();
-
             let (close_s, close_r) = mpsc::channel();
-            let server = Server {
+            let websocket_connection = WebSocketConnection {
                 sender: sender_mutex.clone(),
                 close_s: close_s,
             };
 
+            let ws_sender = sender_mutex.clone();
             thread::spawn(move || loop {
                 if let Ok(_) = close_r.try_recv() {
                     return;
                 }
 
-                match filewatcher_receiver.recv() {
+                match filewatcher_subscription.recv() {
                     Ok(_) => {
                         let sender = ws_sender.lock().unwrap();
                         sender.send("You need to refresh").unwrap();
@@ -104,7 +105,7 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
                 }
             });
 
-            return server;
+            return websocket_connection;
         })
         .expect("Could not listen to web socket");
     });
