@@ -11,12 +11,12 @@ use std::sync::mpsc;
 
 struct Server {
     sender: Arc<Mutex<Sender>>,
-    close_tx: mpsc::Sender<i32>,
+    close_s: mpsc::Sender<i32>,
 }
 
 impl Handler for Server {
     fn on_close(&mut self, _code: CloseCode, _reason: &str) {
-        self.close_tx.send(0).unwrap();
+        self.close_s.send(0).unwrap();
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
@@ -43,14 +43,14 @@ pub fn listen(port: u16, wiki_path: &str, verbose: bool) {
 
 fn start_file_watcher(dispatcher: ArcDispatcher, wiki_path: String, verbose: bool) {
     thread::spawn(move || {
-        let (watcher_tx, watcher_rx) = mpsc::channel();
+        let (watcher_s, watcher_r) = mpsc::channel();
         let mut watcher: RecommendedWatcher =
-            Watcher::new(watcher_tx, time::Duration::from_millis(500)).expect("Create watcher");
+            Watcher::new(watcher_s, time::Duration::from_millis(500)).expect("Create watcher");
 
         watcher.watch(wiki_path, RecursiveMode::Recursive).unwrap();
 
         loop {
-            match watcher_rx.recv() {
+            match watcher_r.recv() {
                 Ok(_event) => {
                     let mut dispatcher = dispatcher.lock().unwrap();
                     if verbose {
@@ -73,7 +73,7 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
 
         let dispatcher = dispatcher.clone();
         ws::listen(&addr, |out| {
-            let recv = {
+            let filewatcher_receiver = {
                 let mut dispatcher = dispatcher.lock().unwrap();
                 dispatcher.subscribe()
             };
@@ -82,18 +82,18 @@ fn start_ws(dispatcher: ArcDispatcher, port: u16) {
 
             let ws_sender = sender_mutex.clone();
 
-            let (close_tx, close_rx) = mpsc::channel();
+            let (close_s, close_r) = mpsc::channel();
             let server = Server {
                 sender: sender_mutex.clone(),
-                close_tx: close_tx,
+                close_s: close_s,
             };
 
             thread::spawn(move || loop {
-                if let Ok(_) = close_rx.try_recv() {
+                if let Ok(_) = close_r.try_recv() {
                     return;
                 }
 
-                match recv.recv() {
+                match filewatcher_receiver.recv() {
                     Ok(_) => {
                         let sender = ws_sender.lock().unwrap();
                         sender.send("You need to refresh").unwrap();

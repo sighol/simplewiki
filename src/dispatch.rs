@@ -2,27 +2,25 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 
 pub struct SubscriptionHandler<T>
 where
-    T: Send + Clone,
+    T: Clone,
 {
     subscribers: Vec<Sender<T>>,
 }
 
-impl<T: Send + Clone> SubscriptionHandler<T> {
+impl<T: Clone> SubscriptionHandler<T> {
     pub fn new() -> Self {
         Self {
             subscribers: Vec::new(),
         }
     }
 
+    /// Send message to all subscribers. If sending fails, remove the subscriber.
     pub fn send_to_all(&mut self, value: T) {
         let start_len = self.subscribers.len();
+        // Loop backwards so that we can remove subscribers as we go
         for index in (0..start_len).map(|i| start_len - 1 - i) {
-            let should_remove = {
-                let sub = &self.subscribers[index];
-                sub.send(value.clone()).is_err()
-            };
-
-            if should_remove {
+            let sub = &self.subscribers[index];
+            if sub.send(value.clone()).is_err() {
                 self.subscribers.remove(index);
             }
         }
@@ -33,9 +31,9 @@ impl<T: Send + Clone> SubscriptionHandler<T> {
     }
 
     pub fn subscribe(&mut self) -> Receiver<T> {
-        let (tx, rx) = channel();
-        self.subscribers.push(tx);
-        rx
+        let (s, r) = unbounded();
+        self.subscribers.push(s);
+        r
     }
 }
 
@@ -56,12 +54,12 @@ mod tests {
         for i in 0..10 {
             let handler = handler.clone();
             let t = thread::spawn(move || {
-                let rx = {
+                let r = {
                     let mut handler = handler.lock().unwrap();
                     handler.subscribe()
                 };
                 {
-                    if let Ok(next) = rx.recv() {
+                    if let Ok(next) = r.recv() {
                         println!("Received {} on thread {}", next, i);
                     }
                 }
