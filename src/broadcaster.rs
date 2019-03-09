@@ -74,10 +74,8 @@ mod tests {
         // Sleep here so that all threads are up and running.
         thread::sleep(time::Duration::from_millis(100));
 
-        {
-            let mut handler = handler.lock().unwrap();
-            handler.send_to_all(1337);
-        }
+        let mut handler = handler.lock().unwrap();
+        handler.send_to_all(1337);
 
         for t in threads {
             t.join().unwrap();
