@@ -25,5 +25,5 @@ For more options, run `simplewiki --help`.
 ## Installation
 
 ```
-cargo install --path . --git https://github.com/sighol/simplewiki
+cargo install --git https://github.com/sighol/simplewiki
 ```
