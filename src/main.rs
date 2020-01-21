@@ -277,7 +277,6 @@ fn get_page_url(file_path: &Path, wiki_root: &Path) -> Result<String> {
 
 fn main() {
     if let Err(ref e) = run() {
-        use std::io::Write;
         let stderr = &mut ::std::io::stderr();
         let error = "Error writing to stderr";
 
