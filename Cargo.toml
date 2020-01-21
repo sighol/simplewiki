@@ -8,36 +8,36 @@ edition = "2018"
 debug = true
 
 [dependencies]
-pulldown-cmark = "0.2.0"
+pulldown-cmark = "^0.6.1"
 
 rocket = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_codegen = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_http = { git = "https://github.com/SergioBenitez/Rocket" }
 rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", features = ["tera_templates"] }
 
-regex = "1.1.2"
-tera = "0.11.20"
+regex = "^1"
+tera = "^1"
 
-serde = "1.0.89"
-serde_derive = "1.0.89"
-serde_json = "1.0.39"
-clap = "2.32.0"
+serde = "^1"
+serde_derive = "^1"
+serde_json = "^1"
+clap = "^2"
 
-includedir = "0.5.0"
-phf = "0.7.24"
+includedir = "^0.5"
+phf = "^0.7"
 
 # Open web browse on startup
-open = "1.2.2"
+open = "^1"
 
 # web socket that auto refreshes the wiki when the files change.
-ws = "0.8.0"
-spmc = "0.2.2"
-notify = "4.0.9"
+ws = "^0.8"
+spmc = "^0.3"
+notify = "^4"
 
-error-chain = "0.12.0"
-walkdir = "2.2.7"
+error-chain = "^0.12"
+walkdir = "^2"
 
-stopwatch = "0.0.7"
+stopwatch = "^0.0.7"
 
 
 [build-dependencies]
