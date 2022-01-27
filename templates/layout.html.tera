@@ -82,12 +82,12 @@
 
 
       <div id="main-content" class="container-fluid">
-        <div class="col-md-10">
+        {# <div class="col-md-10"> #}
           <div class="tocify"></div>
           {% block content %}
           {% endblock content %}
         </div>
-      </div>
+      {# </div> #}
     </div>
 
     <script src="/static/js/bootstrap.min.js"></script>
