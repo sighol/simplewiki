@@ -31,6 +31,10 @@ impl ViewGroup {
             views: Vec::new(),
         }
     }
+
+    fn sort(&mut self) {
+        self.views.sort_by(|a, b| a.name.cmp(&b.name));
+    }
 }
 
 pub struct ViewFinder {
@@ -82,6 +86,7 @@ impl ViewFinder {
                 view_group.views.push(view);
             }
         }
+        view_group.sort();
         Ok(view_group)
     }
 
